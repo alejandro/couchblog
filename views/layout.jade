@@ -1,0 +1,30 @@
+!!! 5
+html
+  head
+    title  Node Hispano
+    meta(charset='utf-8')
+    link(rel='stylesheet', href='http://fonts.googleapis.com/css?family=Droid+Sans')
+    link(rel='stylesheet', title='Solarized - Dark', href='styles/solarized_dark.css')
+    -try {
+    - if (styles !== 'undefined') {
+      - styles.forEach(function(s){
+        link(rel="stylesheet",href="styles/" + s)
+      - })
+    - }
+    - } catch(exc) {}
+    script(src='highlight.pack.js')
+    script
+        hljs.initHighlightingOnLoad();
+    body.container
+      .content
+        header.container.row(role='banner')
+          h1
+            a(href='/')!= title
+          h2
+            a.twitter(href='https://twitter.com/divya') twitter
+            a.rss(href='http://feeds.feedburner.com/nimbupani') RSS Feed
+            a.youtube(href='http://youtube.com/nimbupani', youtube='Youtube', channel='Channel')
+            a.github(href='https://github.com/nimbupani') Github
+        section.body-index!= body
+        footer
+          p NodeHispano &copy;

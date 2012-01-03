@@ -1,0 +1,46 @@
+article
+  nav.article
+  a.previous(href='/twittering-with-d3.html', title='Twittering with D3') ❬
+  header
+    time(datetime='2012-01-01T10:05:00-08:00', pubdate='#{date.now}')
+      span.day #{date.day}-
+      span.month #{date.month}-
+      span.year #{date.year}
+    h1.entry-title
+      a(href='/mustache.html') #{title}
+  .entry-content
+    p
+      | La conversión entre
+      code  humanos 
+      | y no humanos diariamente se ven afectados por el simple hecho de que no puede ser
+      | cierto
+    p
+      | sin embargo la lucha es constante
+    pre
+      code 
+        | function (){ 
+        |   console.log(i)
+        | }
+    p
+      | hola
+  footer
+    p.meta
+      | Este post fue escrito por
+      a(href='href')
+      | en
+      time(datetime='2012-01-01T10:05:00-08:00', pubdate='#{date.now}')
+        span.day #{date.day}-
+        span.month #{date.month}-
+        span.year #{date.year}
+      | en
+      span.categories
+      - try {
+        a.category(href='/categories/web-development/') #{tags}
+      - } catch (exc){
+        a.category(href='/categories/web-development/') -
+      - }
+      | con
+      a(href='/mustache.html#disqus_thread', data-disqus-identifier='http://nimbupani.com/mustache.html')  1 Comment
+      | . Si te gustaria actualizar o modificar haz un
+      a(href='https://github.com/nimbupani/nimbupani.github.com/blob/source/source/_posts/2012-01-01-mustache.md') pull request
+      | .

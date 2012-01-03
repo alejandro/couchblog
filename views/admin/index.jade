@@ -1,0 +1,17 @@
+h2 Crear un nuevo post
+
+form(action="/b/new",method="post",id="post",class="nice")
+  input(type="hidden",value=new Date(), name="fecha")
+  legend  Nuevo tema
+  p
+    label(for="title") Titulo
+    input(type="text",class="input-text",name="titulo",placeholder="Ingresa el titulo del post")
+  p 
+    label(for="tags") Tags
+    input(type="text",class="input-text",name="tags",placeholder="tags separadas por comas")
+  p
+    label(for="content") Contenido
+    textarea(style="margin-left: 0px; margin-right: 268px; width: 598px; margin-top: -9px; margin-bottom: 9px; height: 549px",value="",name="contenido",class="input-text") Recuerda, si quieres, puedes utilizar markdown (default), si es html empieza la primer linea con <html> para reconocer que es html (no Doctype o algo)
+  button(type="submit",value="Guardar") Guardar
+  button(type="preview",value="Vista Previa") Vista Previa
+  button(type="cancel",value="Cancelar") Cancelar

@@ -1,0 +1,11 @@
+{
+  "name":"NodeHispano",
+  "version":"0.0.1",
+  "author":"Alejandro Morales <vamg008@gmail.com>",
+  "dependencies":{
+    "express":"*",
+    "jade":"*",
+    "resourceful":"*",
+    "felix-couchdb":"*"
+  }
+}
