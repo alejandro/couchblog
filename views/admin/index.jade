@@ -1,17 +1,17 @@
-h2 Crear un nuevo post
 dl.tabs.contained
   dd
     a(href="#form1", class="active") Crear o Editar Post
   dd
-    a(href="#form2") Configurar Cuenta
-  dd
     a(href="#rpreview",id="previewTrigger") Preview
+  dd
+    a(href="#form2") Configurar Cuenta
   - if (session.user.level === 4 ){
     dd
       a(href="#addUser") Add user
   - } 
 ul.tabs-content.contained
   li.active#form1
+    h3 Crear un nuevo post
     form(action="/b/new",method="post",id="post",class="nice")
       input(type="hidden",value=new Date(), name="fecha")
       legend  Nuevo tema
@@ -23,9 +23,8 @@ ul.tabs-content.contained
         input(type="text",class="input-text",name="tags",placeholder="tags separadas por comas")
       p
         label(for="content") Contenido
-        textarea(style="margin-left: 0px; margin-right: 268px; width: 100%; margin-top: -9px; margin-bottom: 9px; height: 549px",value="",id="post",name="contenido",class="input-text") Recuerda, si quieres, puedes utilizar markdown (default), si es html empieza la primer linea con <html> para reconocer que es html (no Doctype o algo)
-      button(type="submit",value="Guardar",class="alter radius button") Guardar
-      button(type="preview",value="Vista Previa",id="preview",class="green radius button") Vista Previa
+        textarea(style="margin-left: 0px; margin-right: 268px; width: 100%; margin-top: -9px; margin-bottom: 9px; height: 349px",value="",id="post",name="contenido",class="input-text") **Recuerda**, si quieres, puedes utilizar markdown (default), _si es html_ empieza la primer linea con <html> para reconocer que es html (no Doctype o algo)
+      button(type="submit",value="Guardar",class="alter radius button") Guardar      
       button(type="cancel",value="Cancelar",class="white radius button") Cancelar
   li#form2
     form(action="/u/update",method="post",id="updateUser",class="nice")
@@ -58,7 +57,7 @@ ul.tabs-content.contained
       button(type="cancel",value="Cancelar",class="white button radius") Cancelar
   li#rpreview Preview
   li#addUser Agregar Usuario
-    form(method="POST",action="/u/new",id="formUser")
+    form(method="POST",action="/u/new",id="formUser",class="nice")
       legend Crear nuevo usuario
       p
         label(for="name") Nombre
@@ -79,6 +78,8 @@ script(type="text/javascript")
           contentLocation = $tab.attr("href");
       $activeTab.removeClass('active');
       $tab.addClass('active');
+      var html = marked(document.getElementsByName('contenido')[0].value);
+      $('#rpreview').html(html);
       $(contentLocation).closest('.tabs-content').children('li').hide();
       $(contentLocation).show();
     }
@@ -123,13 +124,5 @@ script(type="text/javascript")
       if ($(e.target).parents().is('.flyout') || $(e.target).is('.flyout')) {
         e.preventDefault();
       }
-    });
-    $('#preview').click(function(e){
-      e.preventDefault();
-      // Si soy vieja escuela y me gusta esto
-      var html = marked(document.getElementsByName('contenido')[0].value);
-      $('#rpreview').html(html);
-      var c = $('dl.tabs').children('dd').children('a')[2];
-      activateTab(c);
     });
   });

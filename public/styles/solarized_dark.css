@@ -1070,3 +1070,6 @@ p {padding-top:5px !important;}
     padding:30px;
     min-width 100% !important;
 }
+.off {
+    display:none !important;
+}

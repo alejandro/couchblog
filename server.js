@@ -241,6 +241,7 @@ var getByTag =function(tag,resp){
   var posts =[];
   var url = '/_design/tags/_view/tags';
   db.view('tags','tags',{key: tag.trim(),limit:8,descending:true},function(err,cb){
+    console.log(err || cb)
     if (err) {
       resp(err, null)
     } else {
@@ -340,11 +341,12 @@ var updateUser = function(u,c,r){
 var giveMeLabels = function giveMeLabels(text) {
   if (!text) return [];
   /* split (s) para espacios*/
-  text = text.trim();
-  return text.
-    split(/\,+/).
-    filter(function(v) { return v.length > 2; }).
-    filter(function(v, i, a) { return a.lastIndexOf(v) === i; });
+  var tags =[]
+  text =  text.split(',')
+  text.forEach(function(tag){
+    tags.push(tag.trim());
+  });
+  return tags
 }
 var Post = function(p,req,n) {
   this.date = p.fecha;
@@ -411,28 +413,10 @@ app.get('/tag/:tag',function(req,res){
 app.post('/u/new(*)',function(req,res){
   if (req.session.user.level === 4) {
     if (req.body){
-
-      /*
-       * A user has this params
-       * 
-       { name: 'Alejandro Morales',
-  email: 'vamg008@gmail.com',
-  username: 'alejandromg' }
-      */
-      
       var rb       = req.body,
           username = rb.username, 
           ruser = new User(rb,true);
       users.view('username','auth',{key:username,limit:1}, function(error,ok){
-        /*
-        { total_rows: 1,
-  offset: 0,
-  rows: 
-   [ { id: '36183ae5c2206b01caa391ac710083df',
-       key: 'alejandromg',
-       value: [Object] } ] }
-
-        */
         if (ok && ok.offset === 1){
           users.insert(ruser, function(error,ok){
             if (error){
@@ -447,7 +431,6 @@ app.post('/u/new(*)',function(req,res){
       })
     } else {
       res.json({status:"Invalid Request"});
-
     }
   } else {
     res.json(["No PERMITIDO"])
@@ -476,21 +459,28 @@ app.get('/admin(*)',function(req,res){
 });
 app.post('/b/new',function(req,res){
   var body = req.body;
-  var post = new Post(body,req,true);
-  if (isJSON(req.url)){
-    res.json({'status':'No implementeda'});
-  } else if (req.session.user_id) {
-    db.insert(post, function(err,data){
-      if (err) {
-        res.json(err);
-      } else {
-        res.redirect('/' + data.id)
-      }
-    })
-  } else {
-    res.statusCode(401);
-    res.json({status:'forbidden'});
-  }
+  try {body.titulo = body.title.trim()}catch(ex){}
+  if (body.titulo !== 'undefined' && body.titulo === '') {
+    res.json({status:'Error', info:'titulo vacio'})
+  } else if (body.contenido.trim() === ''){
+    res.json({status:'Error', info:'Contenido vacio'})
+  }else{
+    var post = new Post(body,req,true);
+    if (isJSON(req.url)){
+      res.json({'status':'No implementeda'});
+    } else if (req.session.user_id) {
+      db.insert(post, function(err,data){
+        if (err) {
+          res.json(err);
+        } else {
+          res.redirect('/' + data.id)
+        }
+      })
+    } else {
+      res.statusCode(401);
+      res.json({status:'forbidden'});
+    }
+}
 });
 
 app.post('/login',function(req,res){
