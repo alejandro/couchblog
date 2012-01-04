@@ -5,18 +5,16 @@
  *
 */
 
-var express     = require('express'),
-    resourceful = require('resourceful'),
-    crypto      = require('crypto'),
-    fs          = require('fs'),
-    couchdb     = require('felix-couchdb'),
-    url         = require('url'),
-    md          = require('node-markdown').Markdown,
-    client      = couchdb.createClient(5984, 'localhost'),
-    db          = client.db('blog'),
-    users       = client.db('users');
-
-
+var express        = require('express'),
+    resourceful    = require('resourceful'),
+    crypto         = require('crypto'),
+    fs             = require('fs'),
+    couchdb        = require('felix-couchdb'),
+    url            = require('url'),
+    md             = require('node-markdown').Markdown,
+    client         = couchdb.createClient(5984, 'localhost'),
+    db             = client.db('blog'),
+    users          = client.db('users');
     ConnectCouchDB = require('connect-couchdb')(express);
 
 var store = new ConnectCouchDB({
@@ -46,6 +44,9 @@ app.configure(function(){
 app.dynamicHelpers({
   session: function(req, res) {
     return req.session;
+  },
+  sitetitle:function(req,res){
+    return  "Node Hispano";
   }
 });
 
@@ -390,6 +391,7 @@ app.get('/admin(*)',function(req,res){
   } else if (req.session.user_id) {
     res.render('admin/index',{
       styles : ["forms.css","ui.css"],
+      js:["md.js"],
       user: new User(req.session.user),
       time: Date.now(),
       title:"admin"
@@ -446,11 +448,16 @@ app.post('/login',function(req,res){
 
 }); 
 app.get('/login',function(req,res){
-  res.render('sessions/new',{
-    redir: req.query.redir  || '',
-    token:Date.now(),
-    title:"Login"
-  });
+  if (req.session.user_id) {
+    res.redirect('/admin');
+  } else {
+    res.render('sessions/new',{
+      redir: req.query.redir  || '',
+      token:Date.now(),
+      title:"Login",
+      row: true
+    });
+  }
 });
 app.get('/logout',function(req,res){
   if (req.session.user) {

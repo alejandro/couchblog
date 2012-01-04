@@ -160,7 +160,7 @@
   blockquote cite:before { content: "\2014 \0020"; }
   blockquote cite a, blockquote cite a:visited { color: #555; }
   
-  hr { border: solid #ddd; border-width: 1px 0 0; clear: both; margin: 12px 0 18px; height: 0; }
+  hr { border: solid #ccc; border-width: 1px 0 0; clear: both; margin: 12px 0 18px; height: 0; }
   
   abbr, acronym { text-transform: uppercase; font-size: 90%; color: #222; border-bottom: 1px solid #ddd; cursor: help; }
   abbr { text-transform: none; }
@@ -405,7 +405,10 @@
   .blue.button      { background-color: #00a6fc;  }
   .red.button       { background-color: #e91c21; }
   .white.button     { background-color: #e9e9e9; color: #333; }
-  .black.button     { background-color: #141414; }
+  .black.button     { background-color: #141414; } 
+  .green.button     { background-color: #859900; }
+  .alter.button     {background-color:#2aa198;}
+
   
   /* Nice Colors ---------- */
   .nice.blue.button   { border: 1px solid #0593dc;  }
@@ -419,6 +422,7 @@
   .red.button:hover, .red.button:focus    { background-color: #d01217;  }
   .white.button:hover, .white.button:focus  { background-color: #dadada; color: #333; }
   .black.button:hover, .black.button:focus  { background-color: #000; }
+  .alter.button:hover,.alter.button:focus {background-color:#00afaf;}
   
   /* Disabled ---------- */
   .button.disabled, .button[disabled] { opacity: 0.6; cursor: default; }
@@ -1203,3 +1207,4 @@ div.slider-nav span.left {
   @media only screen and (max-device-width: 800px), only screen and (device-width: 1024px) and (device-height: 600px), only screen and (width: 1280px) and (orientation: landscape), only screen and (device-width: 800px), only screen and (max-width: 767px) {
     .video { padding-top: 0; }
   }
+.logo {font-weight: 800;letter-spacing:-3px;}

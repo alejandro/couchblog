@@ -2,13 +2,17 @@
 html
   head
     - try{ 
-      title  #{title} - Node Hispano
+      - if (title === "Node Hispano") {
+        title  #{title}
+      - } else {
+        title #{title} -  #{sitetitle}
+      - }
     - }catch(exc) {
-      title  Node Hispano
+      title  #{sitetitle}
     - }
     meta(charset='utf-8')
     link(rel='stylesheet', href='http://fonts.googleapis.com/css?family=Droid+Sans')
-    link(rel='stylesheet', title='Solarized - Dark', href='/styles/solarized_dark.css')
+    link(rel='stylesheet', title='Solarized - Dark', href='/styles/solarized_dark.css?v=2131')
     link(rel='stylesheet', title='Solarized - Dark', href='/styles/default.css')
     script(src="http://code.jquery.com/jquery.min.js",type="text/javascript")
     -try {
@@ -25,12 +29,29 @@ html
       .content
         header.container.row(role='banner')
           h1
-            a(href='/') Node Hispano
+            img(src="http://static-content.nodehispano.com/wp-content/uploads/logo_nodehispano.jpg", alt="Node.js Hispano", title="JavaScript en el Servidor - Comunidad en Español" ,width="58px", height="95px", style="vertical-align:middle; margin-right:10px;box-shadow: 1px 0 #ccc, -1px 0 #ccc,0 -1px #ccc;")
+            a.logo(href='/') #{sitetitle}
           h2
             a.twitter(href='https://twitter.com/NodeHispano') twitter
             a.rss(href='http://feeds.feedburner.com/nodehispano') RSS Feed
             a.youtube(href='http://youtube.com/nodehispano', youtube='Youtube', channel='Channel')
             a.github(href='https://github.com/github') Github
-        section.body-index!= body
-        footer
-          p NodeHispano &copy;
+        - try {
+          - if (row)
+            section.body-index.row!= body
+          - else 
+            section.body-index!= body
+        - } catch(excp) {
+          section.body-index!= body
+        - }
+        
+        footer(role="realFooter")
+          p #{sitetitle} &hearts; 
+            a(href="//nodejs.org") node.js
+    -try {
+    - if (js !== 'undefined') {
+      - js.forEach(function(s){
+        script(type="text/javascript",src="/javascript/" + s)
+      - })
+    - }
+    - } catch(exc) {}

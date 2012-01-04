@@ -1,34 +1,25 @@
-.wrap.row
-  .four.columns.centered
-    section.dashboard.main.white
-      .modal(style='position: relative; top: auto; left: auto; margin: 0 auto; z-index: 1;')
-        .modal-header
-          h3
-            | Login
-          div.modal-body
-            form(action='/login', method='POST',id="formLog",class="nice custom")
-              legend Ingresa tus datos
-              input(type='hidden', name='redir', value=redir)
-              input(type='hidden',name='user[no_js]',value='true')
-              input(type='hidden',name='csrf',value='#{token}')
-              - var time = new Date().toLocaleDateString();
-                input(type='hidden', name='date', value= time)
-              label Username:
-              input(type="text",name="user[username]",id='login', class="input-text",required)
-              label Password:
-              input(type="password",name="user[password]",id='password', class="input-text",required)
-              label(for="remember_me")
-                input#remember_me(type="checkbox",name="remember_me", id="remember_me" ,style="display: none;")
-                span(class="custom checkbox")
-                |  No cerrar sesión.
-              button(type="reset", class="white button nice radius") Cancel
-              button(type="submit",id="subLog", class="blue button nice radius") Entrar
-script
-  window.encrypted = function encrypted(word){if(typeof word==='string'){var P=word,W='ABCDEFGHIJKLMNÑOPQRSTUVWXYZ',L='abcdefghijklmnñopqrstuvwxyz',N='@_-0123456789.',A=[],R=[],c=0;P.split('').forEach(function(item){if(W.search(item)===-1){if(L.search(item)===-1){if(N.search(item)!==-1){A.push('3_'+N.search(item))}else{throw new Error('Ups');}}else{A.push('2_'+L.search(item));}}else{A.push('1_'+W.search(item))}});var j=0,k=0,L=[];A.forEach(function(i){c++;j=i.split('_')[1];k=parseFloat(j)+3;R=[];for(var m=j;m<=k;m++){if(m.toString().length===1){R.push('0'+m);}else{R.push(m);}}L.push(i.split('_')[0]+'_'+R.join(''))});return L.join('-');}}
-  $(document).ready(function(){
-    $('#formLog').submit(function() {
-      $('[name="user[no_js]"]').val('false');
-      $('[name="user[password]"]').val(encrypted($('[name="user[password]"]').val()));
-      return true;
-    });
-  });
+
+.five.columns.centered
+  section.dashboard.main.white
+    .modal(style='position: relative; top: auto; left: auto; margin: 0 auto; z-index: 1;')
+      .modal-header
+        h3
+          | Login
+        div.modal-body
+          form(action='/login', method='POST',id="formLog",class="nice custom")
+            legend Ingresa tus datos
+            input(type='hidden', name='redir', value=redir)
+            input(type='hidden',name='user[no_js]',value='true')
+            input(type='hidden',name='csrf',value='#{token}')
+            - var time = new Date().toLocaleDateString();
+              input(type='hidden', name='date', value= time)
+            label Username:
+            input(type="text",name="user[username]",id='login', class="input-text",required)
+            label Password:
+            input(type="password",name="user[password]",id='password', class="input-text",required)
+            label(for="remember_me")
+              input#remember_me(type="checkbox",name="remember_me", id="remember_me" ,style="display: none;")
+              span(class="custom checkbox")
+              |  No cerrar sesión.
+            button(type="reset", class="white button radius") Cancel
+            button(type="submit",id="subLog", class="alter button radius") Entrar

@@ -1,12 +1,15 @@
+nav
+  ul
+    li 
+      a(href="/logout") Cerrar Sesión
 h2 Crear un nuevo post
-
 dl.tabs.contained
   dd
     a(href="#form1", class="active") Crear o Editar Post
   dd
     a(href="#form2") ver Estadisticas
   dd
-    a(href="#form3") ---
+    a(href="#rpreview",id="previewTrigger") Preview
 
 ul.tabs-content.contained
   li.active#form1
@@ -21,10 +24,10 @@ ul.tabs-content.contained
         input(type="text",class="input-text",name="tags",placeholder="tags separadas por comas")
       p
         label(for="content") Contenido
-        textarea(style="margin-left: 0px; margin-right: 268px; width: 100%; margin-top: -9px; margin-bottom: 9px; height: 549px",value="",name="contenido",class="input-text") Recuerda, si quieres, puedes utilizar markdown (default), si es html empieza la primer linea con <html> para reconocer que es html (no Doctype o algo)
-      button(type="submit",value="Guardar") Guardar
-      button(type="preview",value="Vista Previa") Vista Previa
-      button(type="cancel",value="Cancelar") Cancelar
+        textarea(style="margin-left: 0px; margin-right: 268px; width: 100%; margin-top: -9px; margin-bottom: 9px; height: 549px",value="",id="post",name="contenido",class="input-text") Recuerda, si quieres, puedes utilizar markdown (default), si es html empieza la primer linea con <html> para reconocer que es html (no Doctype o algo)
+      button(type="submit",value="Guardar",class="alter radius button") Guardar
+      button(type="preview",value="Vista Previa",id="preview",class="green radius button") Vista Previa
+      button(type="cancel",value="Cancelar",class="white radius button") Cancelar
   li#form2
     form(action="/b/new",method="post",id="post",class="nice")
       input(type="hidden",value=new Date(), name="fecha")
@@ -38,10 +41,10 @@ ul.tabs-content.contained
       p
         label(for="content") Contenido
         textarea(style="margin-left: 0px; margin-right: 268px; width: 100%; margin-top: -9px; margin-bottom: 9px; height: 549px",value="",name="contenido",class="input-text") Recuerda, si quieres, puedes utilizar markdown.
-      button(type="submit",value="Guardar") Guardar
-      button(type="preview",value="Vista Previa") Vista Previa
-      button(type="cancel",value="Cancelar") Cancelar
-  li#form3 Más estadisticas
+      button(type="submit",value="Guardar",class="white button radius") Guardar
+      button(type="preview",value="Vista Previa",class="white button radius") Vista Previa
+      button(type="cancel",value="Cancelar",class="white button radius") Cancelar
+  li#rpreview Más estadisticas
 script(type="text/javascript")
   $(document).ready(function () {
     function activateTab($tab) {
@@ -93,5 +96,13 @@ script(type="text/javascript")
       if ($(e.target).parents().is('.flyout') || $(e.target).is('.flyout')) {
         e.preventDefault();
       }
+    });
+    $('#preview').click(function(e){
+      e.preventDefault();
+      // Si soy vieja escuela y me gusta esto
+      var html = marked(document.getElementsByName('contenido')[0].value);
+      $('#rpreview').html(html);
+      var c = $('dl.tabs').children('dd').children('a')[2];
+      activateTab(c);
     });
   });

@@ -21,10 +21,12 @@
         span.categories
         - try {
           - post.tags.forEach(function(tag){
-              a.category(href='/tag/'+ tag.trim()) #{tag} ,
+              a.category(href='/tag/'+ tag.trim()) #{tag} 
+              - if (post.tags.length > 1 && (post.tags.length -1) !== post.tags.indexOf(tag)) 
+                | ,
           - });
         - } catch (exc){
           a.category(href='/tag/') sin tags
         - }
-    hr
+      hr
 - });
