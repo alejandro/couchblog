@@ -1,10 +1,16 @@
 !!! 5
 html
   head
-    title  Node Hispano
+    - try{ 
+      title  #{title} - Node Hispano
+    - }catch(exc) {
+      title  Node Hispano
+    - }
     meta(charset='utf-8')
     link(rel='stylesheet', href='http://fonts.googleapis.com/css?family=Droid+Sans')
     link(rel='stylesheet', title='Solarized - Dark', href='styles/solarized_dark.css')
+    link(rel='stylesheet', title='Solarized - Dark', href='styles/default.css')
+    script(src="http://code.jquery.com/jquery.min.js",type="text/javascript")
     -try {
     - if (styles !== 'undefined') {
       - styles.forEach(function(s){
@@ -19,12 +25,12 @@ html
       .content
         header.container.row(role='banner')
           h1
-            a(href='/')!= title
+            a(href='/') Node Hispano
           h2
-            a.twitter(href='https://twitter.com/divya') twitter
-            a.rss(href='http://feeds.feedburner.com/nimbupani') RSS Feed
-            a.youtube(href='http://youtube.com/nimbupani', youtube='Youtube', channel='Channel')
-            a.github(href='https://github.com/nimbupani') Github
+            a.twitter(href='https://twitter.com/NodeHispano') twitter
+            a.rss(href='http://feeds.feedburner.com/nodehispano') RSS Feed
+            a.youtube(href='http://youtube.com/nodehispano', youtube='Youtube', channel='Channel')
+            a.github(href='https://github.com/github') Github
         section.body-index!= body
         footer
           p NodeHispano &copy;

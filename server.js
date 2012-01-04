@@ -10,6 +10,8 @@ var express     = require('express'),
     crypto      = require('crypto'),
     fs          = require('fs'),
     couchdb     = require('felix-couchdb'),
+    url         = require('url'),
+    md          = require('node-markdown').Markdown,
     client      = couchdb.createClient(5984, 'localhost'),
     db          = client.db('blog'),
     users       = client.db('users');
@@ -46,9 +48,7 @@ app.dynamicHelpers({
     return req.session;
   }
 });
-var isJSON = function(url) {
-  return url.split('.')[1] === 'json'
-}
+
 app.configure('development', function(){
   app.use(express.errorHandler({ dumpExceptions: true, showStack: true })); 
 });
@@ -56,6 +56,31 @@ app.configure('development', function(){
 app.configure('production', function(){
   app.use(express.errorHandler()); 
 });
+
+var prettyTitle = function (title,date) {
+  var c    = date ||  new Date(),
+      date = c.toJSON().substr(0,10).split('-').join('')
+  return date + '-'+title
+  // change everything to lowercase
+  .toLowerCase() 
+  // trim leading and trailing spaces
+  .replace(/^\s+|\s+$/g, "") 
+  // change all spaces and underscores to a hyphen
+  .replace(/[_|\s]+/g, "-") 
+  // remove all non-cyrillic, non-numeric characters except the hyphen
+  .replace(/[^a-z\u0400-\u04FF0-9-]+/g, "") 
+  // replace multiple instances of the hyphen with a single instance
+  .replace(/[-]+/g, "-") 
+  .replace(/^-+|-+$/g, "")
+  // trim leading and trailing hyphens
+  .replace(/[-]+/g, "-");
+}
+var mdRender = function(md){
+  return md(md, true);
+}
+var isJSON = function(url) {
+  return url.split('.')[1] === 'json'
+}
 
 app.get('/',function(req,res){
   res.render('index',{
@@ -74,19 +99,64 @@ var md5 = module.exports.md5 = function(str) {
 /*
  * Define user properties
 */
+// Yeah I know, but I like to do my shit
+var getMonth = function(m){
+  m = parseInt(m);
+  switch (m){
+    case 1:
+      return 'Ene';
+      break;
+    case 2:
+      return 'Feb'
+      break;
+    case 3:
+      return 'Mar'
+      break;
+    case 4:
+      return 'Abr'
+      break;
+    case 5:
+      return 'May'
+      break;
+    case 6:
+      return 'Jun'
+      break;
+    case 7:
+      return 'Jul'
+      break;
+    case 8:
+      return 'Ago'
+      break;
+    case 9:
+      return 'Sep'
+      break;
+    case 10:
+      return 'Oct'
+      break;
+    case 11:
+      return 'Nov'
+      break;
+    case 12:
+      return 'Dic'
+      break;
+    default:
+      return 'Ene'
+      break;
+  }
+}
 var User = module.exports.user = function(u,n){
   this.username =  u.username || 'anon';
   if (u.name === 'undefined') throw new Error('Necesito un nombre');
   this.name = u.name || null;
   this.email = u.email || null;
-  this.contact = u.contact || null;
+  this.contact = u.contact || '/';
   this.bio = u.bio || 'Soy '+ this.name ;
   this.posts = u.posts || [];
   this.popular = u.popular || 1;
   if (n){
     this.id = md5(this.name + this.email + this.username); //yeah a long one
     this.salt = Date.now();
-    this.password = new Buffer('Bienvenido' + ( '' + Date.now()).substr(-3)).toString('base64'); 
+    this.password = new Buffer('Bienvenido' + ( '' +this.salt).substr(-3)).toString('base64'); 
     this.verified = true;
   } else {
     this.id = u.id || null;
@@ -156,70 +226,93 @@ app.get('/admin(*)',function(req,res){
     }
   } else if (req.session.user_id) {
     res.render('admin/index',{
-      styles : ["forms.css"],
+      styles : ["forms.css","ui.css"],
       user: new User(req.session.user),
       time: Date.now(),
       title:"admin"
     })
   } else {
     res.writeHeader(501, {"Content-type":"text/html"})
-    res.end('<h2>No Implementeda, o no tienes permiso GTFO!</h2>')
+    res.end('<h2>No Implementeda GTFO!</h2>')
   }
 });
-
+var giveMeLabels = function giveMeLabels(text) {
+  if (!text) return [];
+  /* split (s) para espacios*/
+  text = text.trim();
+  return text.
+    split(/\,+/).
+    filter(function(v) { return v.length > 2; }).
+    filter(function(v, i, a) { return a.lastIndexOf(v) === i; });
+}
+var Post = function(p,req,n) {
+  this.date = p.fecha;
+  this.id = prettyTitle(p.titulo);
+  this.title = p.titulo;
+  // it's new?
+  if (n) {
+    this.tags = giveMeLabels(p.tags || 'sin tags'); // array with tags
+  } else this.tags = p.tags || 'sin tags';
+  this.content = p.contenido; // Saved raw then try to compile when render
+  var u=req.session.user;
+  u.posts.push(this.id);
+  this.author = p.author || { username : u.username,
+    posts:u.posts,
+    contact: u.contact,
+    bio:u.bio,
+    name:u.name }
+  this.up = p.up || 1;
+  this.views = u.views || 0;
+  this.down = p.down || 0;
+  this.percentil = (this.up - this.down);
+}
 app.post('/b/new',function(req,res){
   var body = req.body;
-   /* { 
-     fecha: 'Mon Jan 02 2012 23:44:57 GMT-0600 (CST)',
-     titulo: 'Chasi',
-     tags: 'las.lsa.as',
-     contenido: 'Recuerda, si quieres, puedes utilizar markdown (default), si es html empieza la primer linea con <html> para reconocer que es html (no Doctype o algo)\r\n'
-     },
-
-     */
-  if (req.session.user) {
-    db.saveDoc()
+  var post = new Post(body,req,true);
+  if (isJSON(req.url)){
+    res.json({'status':'No implementeda'});
+  } else if (req.session.user_id) {
+    db.saveDoc(post.id, post, function(err,data){
+      if (err) {
+        res.json(err);
+      } else {
+        res.redirect('/' + data.id)
+      }
+    })
+  } else {
+    res.statusCode(401);
+    res.json({status:'forbidden'});
   }
-  /*
-  try {
-  var name = md5(req.body.name + Date.now());
-  db.saveDoc('my-doc', {awesome: 'couch fun'}, function(er, ok) {
-    if (er) {
-    res.json(er);
-    } else {
-      res.end('saved')
-    }
-  });
-  } catch(exc) {
-    res.end(exc)
-  }*/
-  res.json({'status':'No implementeda'});
 });
 
 app.post('/login',function(req,res){
     var target = req.body.user,
         u = target.username,
-        pass = target.password;
+        pass = target.password,
+        ready = false;
+      function checkPass(pass,salt,b){
+        if (!b) {
+          return new Buffer(pass + ( '' +salt).substr(-3)).toString('base64'); 
+        } else {
+          return md5(pass + salt);
+        }
+      }
     users.getDoc(u, function(er, doc) {
       if (er) {
         res.json(er);
-      } else if (doc.password === pass) {
-          req.session.user_id = doc._id;
-          req.session._rev = doc._rev;
-          req.session.user = doc;
-          req.session.username = doc.username;
-         if (doc.verified) {
-         } else {
-         }
-          res.redirect('/admin');
+      } else if (doc.verified && (doc.password === pass || checkPass(pass, doc.salt))) {
+        req.session.user_id = doc._id;
+        req.session._rev = doc._rev;
+        req.session.user = doc;
+        req.session.username = doc.username;
+        res.redirect('/admin');
       } else {
-          res.json({status:'forbidden'})
+        res.json({status:'forbidden'})
       }
     });
 
 }); 
 app.get('/login',function(req,res){
-  console.log(req)
   res.render('sessions/new',{
     redir: req.query.redir  || '',
     token:Date.now(),
@@ -236,5 +329,58 @@ app.get('/logout',function(req,res){
     }
   }
   res.redirect('/');
+});
+app.get('/*',function(req,res,next){
+  // parse integer and see if it's a date the toString and check length
+  var checkUrl = url.parse(req.url).path.split('/').length;
+  var id = url.parse(req.url).path.split('/')[1];
+  var checkId  = parseInt(id.substr(0,8)).toString().length;
+  var rdate  = id.substr(0,8),
+  rdate = {
+      now: rdate,
+      year: rdate.substr(0,4), 
+      month: getMonth(rdate.substr(-4).substr(0,2)),
+      day: rdate.substr(-2),
+    }
+  rdate.date = rdate.day+'-'+ rdate.month + '-'+rdate.year;
+  if ( checkId === 8 && checkUrl === 2) {
+    db.getDoc(id,function(error,post){
+      if (error){
+        res.json({status:'not_found'});
+      } else { 
+        var html=[];
+        try {
+            html.push(md(post.content,true)); 
+        } catch(exc){ html.push('ERROR')}
+        post.views += 1;
+        db.saveDoc(id, post);
+        res.render('posts/index',{
+          bodyContent: html.join(''),
+          post: post,
+          date: rdate
+        });
+      }
+    });
+  } else {
+    next()
+  }  
+});
+app.get('/*',function(req,res,next){
+  var u = req.url.split('.');
+  if (u[u.length - 1] === req.url) {
+    // Yes, I'm to lazy to generate a new [dot]jade file to a 404 error
+    res.writeHeader(404,{"Content-type":"text/html"});
+    res.write('<title>404 No Encontrado - Node Hispano </title>')
+    res.write('<style>html{background-image: url(/images/bg.png);}');
+    res.write('div{text-align:center;padding-top:200px;width:100%;font-size:2em;}')
+    res.write('h4 {font-family:arial; text-shadow:1px 1px #fff;color:#444}')
+    res.write('#footer { font-family: arial;font-size: 0.9em;} a{text-decoration:none}</style>');
+    res.write('<div><img src="http://nodejs.org/logos/nodejs.png">');
+    res.write('<h4>404 - No Encontrado</h4></div>');
+    res.write('<div id="footer"><a href="/">Node Hispano</a> &hearts; node.js</h4></div>');
+    res.end();
+  } else {
+    next();
+  }
 });
 app.listen(process.PORT || 8000);

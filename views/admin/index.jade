@@ -1,17 +1,97 @@
 h2 Crear un nuevo post
 
-form(action="/b/new",method="post",id="post",class="nice")
-  input(type="hidden",value=new Date(), name="fecha")
-  legend  Nuevo tema
-  p
-    label(for="title") Titulo
-    input(type="text",class="input-text",name="titulo",placeholder="Ingresa el titulo del post")
-  p 
-    label(for="tags") Tags
-    input(type="text",class="input-text",name="tags",placeholder="tags separadas por comas")
-  p
-    label(for="content") Contenido
-    textarea(style="margin-left: 0px; margin-right: 268px; width: 598px; margin-top: -9px; margin-bottom: 9px; height: 549px",value="",name="contenido",class="input-text") Recuerda, si quieres, puedes utilizar markdown (default), si es html empieza la primer linea con <html> para reconocer que es html (no Doctype o algo)
-  button(type="submit",value="Guardar") Guardar
-  button(type="preview",value="Vista Previa") Vista Previa
-  button(type="cancel",value="Cancelar") Cancelar
+dl.tabs.contained
+  dd
+    a(href="#form1", class="active") Crear o Editar Post
+  dd
+    a(href="#form2") ver Estadisticas
+  dd
+    a(href="#form3") ---
+
+ul.tabs-content.contained
+  li.active#form1
+    form(action="/b/new",method="post",id="post",class="nice")
+      input(type="hidden",value=new Date(), name="fecha")
+      legend  Nuevo tema
+      p
+        label(for="title") Titulo
+        input(type="text",class="input-text",name="titulo",placeholder="Ingresa el titulo del post")
+      p 
+        label(for="tags") Tags
+        input(type="text",class="input-text",name="tags",placeholder="tags separadas por comas")
+      p
+        label(for="content") Contenido
+        textarea(style="margin-left: 0px; margin-right: 268px; width: 100%; margin-top: -9px; margin-bottom: 9px; height: 549px",value="",name="contenido",class="input-text") Recuerda, si quieres, puedes utilizar markdown (default), si es html empieza la primer linea con <html> para reconocer que es html (no Doctype o algo)
+      button(type="submit",value="Guardar") Guardar
+      button(type="preview",value="Vista Previa") Vista Previa
+      button(type="cancel",value="Cancelar") Cancelar
+  li#form2
+    form(action="/b/new",method="post",id="post",class="nice")
+      input(type="hidden",value=new Date(), name="fecha")
+      legend  Nuevo tema
+      p
+        label(for="title") Titulo
+        input(type="text",class="input-text",name="titulo",placeholder="Ingresa el titulo del post")
+      p 
+        label(for="tags") Tags
+        input(type="text",class="input-text",name="tags",placeholder="tags separadas por comas")
+      p
+        label(for="content") Contenido
+        textarea(style="margin-left: 0px; margin-right: 268px; width: 100%; margin-top: -9px; margin-bottom: 9px; height: 549px",value="",name="contenido",class="input-text") Recuerda, si quieres, puedes utilizar markdown.
+      button(type="submit",value="Guardar") Guardar
+      button(type="preview",value="Vista Previa") Vista Previa
+      button(type="cancel",value="Cancelar") Cancelar
+  li#form3 Más estadisticas
+script(type="text/javascript")
+  $(document).ready(function () {
+    function activateTab($tab) {
+      var $activeTab = $tab.closest('dl').find('a.active'),
+          contentLocation = $tab.attr("href");
+      $activeTab.removeClass('active');
+      $tab.addClass('active');
+      $(contentLocation).closest('.tabs-content').children('li').hide();
+      $(contentLocation).show();
+    }
+    $('dl.tabs').each(function () {
+      var tabs = $(this).children('dd').children('a');
+      tabs.click(function (e) {
+        e.preventDefault();
+        activateTab($(this));
+      });
+    });
+    if (window.location.hash) {
+      activateTab($('a[href="' + window.location.hash + '"]'));
+    }
+    $(".alert-box").delegate("a.close", "click", function(event) {
+      event.preventDefault();
+      $(this).closest(".alert-box").fadeOut(function(event){
+        $(this).remove();
+      });
+    });
+    try {$('input, textarea').placeholder();}catch(exc){}
+    var currentFoundationDropdown = null;
+    $('.nav-bar li a, .nav-bar li a:after').each(function() {
+      $(this).data('clicks', 0);
+    });
+    $('.nav-bar li a, .nav-bar li a:after').live('click', function(e) {
+      e.preventDefault();
+      if (currentFoundationDropdown !== $(this).index() || currentFoundationDropdown === null) {
+        $(this).data('clicks', 0);
+        currentFoundationDropdown = $(this).index();
+      }
+      $(this).data('clicks', ($(this).data('clicks') + 1));
+      var f = $(this).siblings('.flyout');
+      if (!f.is(':visible') && $(this).parent('.has-flyout').length > 1) {
+        $('.nav-bar li .flyout').hide();
+        f.show();
+      } else if (($(this).data('clicks') > 1) || ($(this).parent('.has-flyout').length < 1)) {
+        window.location = $(this).attr('href');
+      }
+    });
+    $('.nav-bar').live('click', function(e) {
+      e.stopPropagation();
+      if ($(e.target).parents().is('.flyout') || $(e.target).is('.flyout')) {
+        e.preventDefault();
+      }
+    });
+  });

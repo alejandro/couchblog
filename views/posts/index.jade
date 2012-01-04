@@ -1,0 +1,41 @@
+article
+  nav.article
+  a.previous(href='/twittering-with-d3.html', title='Twittering with D3') ❬
+  header
+    time(datetime=new Date(date.date), pubdate='#{date.now}')
+      span.day #{date.day}-
+      span.month #{date.month}-
+      span.year #{date.year}  
+      span.views  | Views: #{post.views}  
+      span.up 
+        a(href="javascript:void(0)",id="up") | Up: 
+        |  #{post.up} 
+      span.up 
+        a(href="javascript:void(0)",id="down") | Down: 
+        | #{post.down} 
+    h1.entry-title
+      a(href='/' + post.id) #{post.title}
+  .entry-content!= bodyContent
+  footer
+    p.meta
+      | Este post fue escrito por
+      a(href=post.author.contact) #{post.author.name}  
+      | el
+      time(datetime=new Date(date.date), pubdate='#{date.now}')
+        span.day #{date.day}-
+        span.month #{date.month}-
+        span.year #{date.year}
+      | en
+      span.categories
+      - try {
+        - post.tags.forEach(function(tag){
+            a.category(href='/tags/'+ tag.trim()) #{tag} ,
+        - });
+      - } catch (exc){
+        a.category(href='/tags/') sin tags
+      - }
+      | con
+      a(href='/'+ post.id+'#disqus_thread', data-disqus-identifier='http://nodehispano.com/' + post.id )  1 Comment
+      | . Si te gustaria actualizar o modificar haz un
+      a(href='#') pull request
+      | .

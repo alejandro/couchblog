@@ -401,7 +401,7 @@ nav.article a.previous, #articles li, #articles .btn, .blog-archives article tim
 #articles,
 footer[role="contentinfo"] {
     padding: 0 3em;
-    max-width: 48em;
+    max-width: 54em;
     margin: 0 auto;
 }
 
@@ -667,7 +667,7 @@ article footer::before {
     border-radius: 3em;
     left: 50%;
     margin-left: -1.5em;
-    width: 3em;
+    width: 4em;
     z-index: 2;
 }
 
@@ -959,11 +959,12 @@ a.dsq-subscribe-email em, a.dsq-subscribe-rss em {
   }
 }
  
-pre,code {font-family:"Monaco",monospace;font-size:0.9em;}
+code {font-family:"Monaco","monospace" !important;}
 pre code {
   display: block; padding: 0.5em;
   background: #002b36; color: #839496;
   padding-left:30px;
+  font-family:"Monaco",monospace;font-size:0.9em;
 }
 
 pre .comment,
@@ -1051,3 +1052,4 @@ pre .deletion {
 pre .tex,pre .formula {
   background: #073642;
 }
+p {padding-top:5px !important;}
