@@ -29,10 +29,10 @@ article
       span.categories
       - try {
         - post.tags.forEach(function(tag){
-            a.category(href='/tags/'+ tag.trim()) #{tag} ,
+            a.category(href='/tag/'+ tag.trim()) #{tag} ,
         - });
       - } catch (exc){
-        a.category(href='/tags/') sin tags
+        a.category(href='/tag/') sin tags
       - }
       | con
       a(href='/'+ post.id+'#disqus_thread', data-disqus-identifier='http://nodehispano.com/' + post.id )  1 Comment

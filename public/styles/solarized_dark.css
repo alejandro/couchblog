@@ -414,7 +414,7 @@ h1 {
 @media only screen and (min-width: 992px) {
     article .entry-title,
   article .archive-title {
-        font-size: 4em;
+        font-size: 2em;
     }
 }
 
@@ -964,6 +964,7 @@ pre code {
   display: block; padding: 0.5em;
   background: #002b36; color: #839496;
   padding-left:30px;
+  padding-bottom:20px;
   font-family:"Monaco",monospace;font-size:0.9em;
 }
 

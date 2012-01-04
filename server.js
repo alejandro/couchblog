@@ -57,6 +57,63 @@ app.configure('production', function(){
   app.use(express.errorHandler()); 
 });
 
+var getMonth = function(m){
+  m = (parseInt(m) === NaN) ? m : parseInt(m);
+  switch (m){
+    case 1:
+    case 'Jan':
+      return 'Ene';
+      break;
+    case 2:
+    case 'Feb':
+      return 'Feb'
+      break;
+    case 3:
+    case 'Mar':
+      return 'Mar'
+      break;
+    case 4:
+    case 'May':
+      return 'Abr'
+      break;
+    case 5:
+    case 'May':
+      return 'May'
+      break;
+    case 6:
+    case 'Jun':
+      return 'Jun'
+      break;
+    case 7:
+    case 'Jul':
+      return 'Jul'
+      break;
+    case 8:
+    case 'Aug':
+      return 'Ago'
+      break;
+    case 9:
+    case 'Sep':
+      return 'Sep'
+      break;
+    case 10:
+    case 'Oct':
+      return 'Oct'
+      break;
+    case 11:
+    case 'Nov':
+      return 'Nov'
+      break;
+    case 12:
+    case 'Dec':
+      return 'Dic'
+      break;
+    default:
+      return 'Ene'
+      break;
+  }
+}
+
 var prettyTitle = function (title,date) {
   var c    = date ||  new Date(),
       date = c.toJSON().substr(0,10).split('-').join('')
@@ -82,68 +139,103 @@ var isJSON = function(url) {
   return url.split('.')[1] === 'json'
 }
 
-app.get('/',function(req,res){
-  res.render('index',{
-    date: { 
-      now: new Date(),
-      month : 'Enero'.substr(0,3),
-      day: "01",
-      year: "2012"
-    },
-    title:"Node Hispano"
-  });
-});
 var md5 = module.exports.md5 = function(str) {
   return crypto.createHash('md5').update(str).digest('hex');
 }
-/*
- * Define user properties
-*/
-// Yeah I know, but I like to do my shit
-var getMonth = function(m){
-  m = parseInt(m);
-  switch (m){
-    case 1:
-      return 'Ene';
-      break;
-    case 2:
-      return 'Feb'
-      break;
-    case 3:
-      return 'Mar'
-      break;
-    case 4:
-      return 'Abr'
-      break;
-    case 5:
-      return 'May'
-      break;
-    case 6:
-      return 'Jun'
-      break;
-    case 7:
-      return 'Jul'
-      break;
-    case 8:
-      return 'Ago'
-      break;
-    case 9:
-      return 'Sep'
-      break;
-    case 10:
-      return 'Oct'
-      break;
-    case 11:
-      return 'Nov'
-      break;
-    case 12:
-      return 'Dic'
-      break;
-    default:
-      return 'Ene'
-      break;
+var getSortByAuthor = function (resp){
+  var sort = []
+  db.request(
+    '/_design/author/_view/Author', function(err,cb){
+      var author =[];
+    if (err){
+      resp('Not_Found',null)
+    } else {
+      cb.rows.forEach(function(item){
+        var index = author.indexOf(item.key);
+        if (index === -1 ) { 
+          author.push(item.key)
+          sort.push({name:item.key, count:1,link:[item.id]})
+          } else {
+            sort[index].count += 1; 
+            sort[index].link.push(item.id)
+          }
+        if ((cb.rows.length -1)=== cb.rows.indexOf(item)) {
+          resp(null, sort);
+        }
+      });
+    }
+  });
+}
+var normalizeDate = function(d) {
+  try {
+    var da = d.substr(0,15);
+    return {
+      year: da.substr(-4),
+      day: da.substr(8,2),
+      month: getMonth(da.substr(4,3)),
+      now: d
+    }
+  } catch(exc) {
+    return {}
   }
 }
+var normalizeData = function(item){
+  var html = '';
+  try {
+    html = md(item.value[1],true);
+  } catch(exp) {
+    html = '<p>Sin descripción</p>'
+  }
+  return {
+          id:item.id, 
+          title:item.value[0], 
+          description:html,
+          views: item.value[2],
+          up: item.value[3],
+          down: item.value[4],
+          author: {
+            name: item.value[5] || 'admin',
+            contact: item.value[6]
+          },
+          tags: item.value[7],
+          date: normalizeDate(item.value[8] || item.key)
+        }
+}
+var getLatest =function(resp){
+  var posts =[]
+  db.request('/_design/latest/_view/latest',{limit:8,descending:true},function(err,cb){
+    if (err) {
+      resp(err, null)
+    } else {
+      cb.rows.forEach(function(item){
+        // Normalizar data
+        posts.push(normalizeData(item));
+       if ((cb.rows.length -1)=== cb.rows.indexOf(item)) {
+        resp(null, posts);
+       }
+      });
+    }
+  });
+}
+var getByTag =function(tag,resp){
+  var posts =[];
+  var url = '/_design/tags/_view/tags';
+  db.request(url,{key: tag.trim(),limit:8,descending:true},function(err,cb){
+    if (err) {
+      resp(err, null)
+    } else {
+      cb.rows.forEach(function(item){
+        // Normalizar data
+        posts.push(normalizeData(item));
+       if ((cb.rows.length -1)=== cb.rows.indexOf(item)) {
+        resp(null, posts);
+       }
+      });
+    }
+  });
+}
+
+
 var User = module.exports.user = function(u,n){
   this.username =  u.username || 'anon';
   if (u.name === 'undefined') throw new Error('Necesito un nombre');
@@ -169,6 +261,77 @@ var User = module.exports.user = function(u,n){
   this.level = u.level || 1;
   return this;
 }
+
+var giveMeLabels = function giveMeLabels(text) {
+  if (!text) return [];
+  /* split (s) para espacios*/
+  text = text.trim();
+  return text.
+    split(/\,+/).
+    filter(function(v) { return v.length > 2; }).
+    filter(function(v, i, a) { return a.lastIndexOf(v) === i; });
+}
+var Post = function(p,req,n) {
+  this.date = p.fecha;
+  this.id = prettyTitle(p.titulo);
+  this.title = p.titulo;
+  // it's new?
+  if (n) {
+    this.tags = giveMeLabels(p.tags || 'sin tags'); // array with tags
+  } else this.tags = p.tags || 'sin tags';
+  this.content = p.contenido; // Saved raw then try to compile when render
+  var u=req.session.user;
+  u.posts.push(this.id);
+  this.author = p.author || { username : u.username,
+    posts:u.posts,
+    contact: u.contact,
+    bio:u.bio,
+    name:u.name }
+  this.description = p.description || this.content.substr(0,250);
+  this.up = p.up || 1;
+  this.views = p.views || 0;
+  this.down = p.down || 0;
+  this.percentil = (this.up - this.down);
+}
+app.get('/',function(req,res){
+  getLatest(function(err,data){
+    if (err) {
+      res.redirect('/500');
+    } else {
+      res.render('index',{
+        date: { 
+          now: new Date(),
+          month : 'Enero'.substr(0,3),
+          day: "01",
+          year: "2012"
+        },
+        posts: data,
+        title:"Node Hispano"
+      }); 
+    }
+  });
+});
+app.get('/tag/:tag',function(req,res){
+  var tag = req.params.tag;
+  getByTag(tag, function(error,data){
+    if(error){
+      console.log(error)
+      res.redirect('/500');
+    } else {
+      res.render('posts/tags',{
+        date: { 
+          now: new Date(),
+          month : 'Enero'.substr(0,3), // TODO: Delete this
+          day: "01",
+          year: "2012"
+        },
+        posts: data,
+        title:"Node Hispano",
+        tag:tag
+      }); 
+    }
+  });
+});
 app.post('/u/new(*)',function(req,res){
   console.log(req.body)
 });
@@ -236,36 +399,6 @@ app.get('/admin(*)',function(req,res){
     res.end('<h2>No Implementeda GTFO!</h2>')
   }
 });
-var giveMeLabels = function giveMeLabels(text) {
-  if (!text) return [];
-  /* split (s) para espacios*/
-  text = text.trim();
-  return text.
-    split(/\,+/).
-    filter(function(v) { return v.length > 2; }).
-    filter(function(v, i, a) { return a.lastIndexOf(v) === i; });
-}
-var Post = function(p,req,n) {
-  this.date = p.fecha;
-  this.id = prettyTitle(p.titulo);
-  this.title = p.titulo;
-  // it's new?
-  if (n) {
-    this.tags = giveMeLabels(p.tags || 'sin tags'); // array with tags
-  } else this.tags = p.tags || 'sin tags';
-  this.content = p.contenido; // Saved raw then try to compile when render
-  var u=req.session.user;
-  u.posts.push(this.id);
-  this.author = p.author || { username : u.username,
-    posts:u.posts,
-    contact: u.contact,
-    bio:u.bio,
-    name:u.name }
-  this.up = p.up || 1;
-  this.views = u.views || 0;
-  this.down = p.down || 0;
-  this.percentil = (this.up - this.down);
-}
 app.post('/b/new',function(req,res){
   var body = req.body;
   var post = new Post(body,req,true);
@@ -330,6 +463,7 @@ app.get('/logout',function(req,res){
   }
   res.redirect('/');
 });
+
 app.get('/*',function(req,res,next){
   // parse integer and see if it's a date the toString and check length
   var checkUrl = url.parse(req.url).path.split('/').length;

@@ -8,17 +8,17 @@ html
     - }
     meta(charset='utf-8')
     link(rel='stylesheet', href='http://fonts.googleapis.com/css?family=Droid+Sans')
-    link(rel='stylesheet', title='Solarized - Dark', href='styles/solarized_dark.css')
-    link(rel='stylesheet', title='Solarized - Dark', href='styles/default.css')
+    link(rel='stylesheet', title='Solarized - Dark', href='/styles/solarized_dark.css')
+    link(rel='stylesheet', title='Solarized - Dark', href='/styles/default.css')
     script(src="http://code.jquery.com/jquery.min.js",type="text/javascript")
     -try {
     - if (styles !== 'undefined') {
       - styles.forEach(function(s){
-        link(rel="stylesheet",href="styles/" + s)
+        link(rel="stylesheet",href="/styles/" + s)
       - })
     - }
     - } catch(exc) {}
-    script(src='highlight.pack.js')
+    script(src='/highlight.pack.js')
     script
         hljs.initHighlightingOnLoad();
     body.container
