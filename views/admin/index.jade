@@ -1,16 +1,15 @@
-nav
-  ul
-    li 
-      a(href="/logout") Cerrar Sesión
 h2 Crear un nuevo post
 dl.tabs.contained
   dd
     a(href="#form1", class="active") Crear o Editar Post
   dd
-    a(href="#form2") ver Estadisticas
+    a(href="#form2") Configurar Cuenta
   dd
     a(href="#rpreview",id="previewTrigger") Preview
-
+  - if (session.user.level === 4 ){
+    dd
+      a(href="#addUser") Add user
+  - } 
 ul.tabs-content.contained
   li.active#form1
     form(action="/b/new",method="post",id="post",class="nice")
@@ -29,22 +28,50 @@ ul.tabs-content.contained
       button(type="preview",value="Vista Previa",id="preview",class="green radius button") Vista Previa
       button(type="cancel",value="Cancelar",class="white radius button") Cancelar
   li#form2
-    form(action="/b/new",method="post",id="post",class="nice")
-      input(type="hidden",value=new Date(), name="fecha")
-      legend  Nuevo tema
+    form(action="/u/update",method="post",id="updateUser",class="nice")
+      legend  Actualizar Usuario
       p
-        label(for="title") Titulo
-        input(type="text",class="input-text",name="titulo",placeholder="Ingresa el titulo del post")
-      p 
-        label(for="tags") Tags
-        input(type="text",class="input-text",name="tags",placeholder="tags separadas por comas")
+        label(for="password") Password Actual (para cualquier acción debes ingresar tu password actual)
+        input(type="password",class="input-text",name="password",placeholder="tu password actual")
       p
-        label(for="content") Contenido
-        textarea(style="margin-left: 0px; margin-right: 268px; width: 100%; margin-top: -9px; margin-bottom: 9px; height: 549px",value="",name="contenido",class="input-text") Recuerda, si quieres, puedes utilizar markdown.
-      button(type="submit",value="Guardar",class="white button radius") Guardar
-      button(type="preview",value="Vista Previa",class="white button radius") Vista Previa
+        label(for="username") Nombre de Usuario:
+        input(type="text",class="input-text",name="username",value=session.user.username)
+      p
+        label(for="name") Nombre :
+        input(type="text",class="input-text",name="name",value=session.user.name)
+      p
+        label(for="npassword") Password Nuevo
+        input(type="password",class="input-text",name="nopassword",placeholder="tu nuevo password")
+      p
+        label(for="npassword") Password Nuevo (otra vez)
+        input(type="password",class="input-text",name="nopassword",placeholder="tu nuevo password")
+      p
+        label(for="contact") Contacto:
+        input(type="url",class="input-text",name="contact",placeholder="tu nuevo contacto", value=session.user.contact)
+      p
+        label(for="email") email
+        input(type="email",class="input-text",name="email",placeholder="tu email", value=session.user.email)
+      p
+        label(for="bio") Bio de Usuario:
+        input(type="text",class="input-text",name="bio",value=session.user.bio)
+      button(type="submit",value="Guardar",class="alter button radius") Actualizar
       button(type="cancel",value="Cancelar",class="white button radius") Cancelar
-  li#rpreview Más estadisticas
+  li#rpreview Preview
+  li#addUser Agregar Usuario
+    form(method="POST",action="/u/new",id="formUser")
+      legend Crear nuevo usuario
+      p
+        label(for="name") Nombre
+        input(type="text",class="input-text",name="name",placeholder="El nombre")
+      p
+        label(for="email") email
+        input(type="email",class="input-text",name="email",placeholder=" email")
+      p
+        label(for="username") usuario
+        input(type="text",class="input-text",name="username",placeholder="el nombre de usuario")
+      button(type="submit",value="Guardar",class="alter button radius") Guardar
+      button(type="cancel",value="Cancelar",class="white button radius") Cancelar
+
 script(type="text/javascript")
   $(document).ready(function () {
     function activateTab($tab) {

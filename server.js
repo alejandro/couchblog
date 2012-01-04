@@ -5,22 +5,37 @@
  *
 */
 
+var  cfg            = {},couchAuthUrl;
+if (process.env.NODE_ENV === 'production'){
+  cfg =  { 
+            host: "nhispano.iriscouch.com",
+            port: "80",
+            ssl:  false,
+            user: "alejandromg",
+            pass: "nhispano"
+          };
+ couchAuthUrl   = 'http://' +cfg.user + ':' +cfg.pass + '@' + cfg.host + ':' + cfg.port;
+}
+
 var express        = require('express'),
     resourceful    = require('resourceful'),
     crypto         = require('crypto'),
     fs             = require('fs'),
-    couchdb        = require('felix-couchdb'),
     url            = require('url'),
     md             = require('node-markdown').Markdown,
-    client         = couchdb.createClient(5984, 'localhost'),
-    db             = client.db('blog'),
-    users          = client.db('users');
-    ConnectCouchDB = require('connect-couchdb')(express);
+    nano           = require('nano')(couchAuthUrl || 5984,'localhost'),
+    ConnectCouchDB = require('connect-couchdb')(express),
+    db             = nano.use('blog'),
+    users          = nano.use('users');
 
 var store = new ConnectCouchDB({
   name: 'sessions',
   reapInterval: 600000,
-  compactInterval: 300000
+  compactInterval: 300000,
+  host: cfg.host || undefined,
+  port: cfg.port || undefined,
+  username: cfg.user || undefined,
+  password: cfg.pass || undefined
 });
 // Shorthand for server + app global process
 var app = module.exports.app = process.app =  express.createServer(
@@ -31,7 +46,7 @@ var app = module.exports.app = process.app =  express.createServer(
 );
 
 app.configure(function(){
-  app.use('db', client.db('blog'));
+  app.use('db', db);
   app.use(express.logger('dev'));
   app.set('views',__dirname+ '/views');
   app.set('view engine','jade');
@@ -145,8 +160,7 @@ var md5 = module.exports.md5 = function(str) {
 }
 var getSortByAuthor = function (resp){
   var sort = []
-  db.request(
-    '/_design/author/_view/Author', function(err,cb){
+  db.view('author','Author',{descending:true}, function(err,cb){
       var author =[];
     if (err){
       resp('Not_Found',null)
@@ -204,24 +218,29 @@ var normalizeData = function(item){
 }
 var getLatest =function(resp){
   var posts =[]
-  db.request('/_design/latest/_view/latest',{limit:8,descending:true},function(err,cb){
+  db.view('latest','latest',{limit:8,descending:true},function(err,cb){
     if (err) {
+      console.log(err)
       resp(err, null)
     } else {
-      cb.rows.forEach(function(item){
-        // Normalizar data
-        posts.push(normalizeData(item));
-       if ((cb.rows.length -1)=== cb.rows.indexOf(item)) {
-        resp(null, posts);
-       }
-      });
+      if (cb.total_rows === 0){
+        resp(null, [])
+      } else {
+        cb.rows.forEach(function(item){
+          // Normalizar data
+          posts.push(normalizeData(item));
+         if ((cb.rows.length -1)=== cb.rows.indexOf(item)) {
+          resp(null, posts);
+         }
+        });
+      }
     }
   });
 }
 var getByTag =function(tag,resp){
   var posts =[];
   var url = '/_design/tags/_view/tags';
-  db.request(url,{key: tag.trim(),limit:8,descending:true},function(err,cb){
+  db.view('tags','tags',{key: tag.trim(),limit:8,descending:true},function(err,cb){
     if (err) {
       resp(err, null)
     } else {
@@ -241,28 +260,83 @@ var User = module.exports.user = function(u,n){
   this.username =  u.username || 'anon';
   if (u.name === 'undefined') throw new Error('Necesito un nombre');
   this.name = u.name || null;
-  this.email = u.email || null;
+  this.email = u.email || 'me@example.com';
   this.contact = u.contact || '/';
   this.bio = u.bio || 'Soy '+ this.name ;
   this.posts = u.posts || [];
   this.popular = u.popular || 1;
   if (n){
-    this.id = md5(this.name + this.email + this.username); //yeah a long one
     this.salt = Date.now();
     this.password = new Buffer('Bienvenido' + ( '' +this.salt).substr(-3)).toString('base64'); 
     this.verified = true;
   } else {
-    this.id = u.id || null;
     this.salt = u.salt || Date.now();
-    this.password = u.password;
+    this.password = u.password || null;
+    this.verified = u.verified || true;
   }
-  this._id = u._id?u._id: undefined;
-  this._rev = u._rev?u._rev:undefined;
-  this.id = u.id || '';
+  this._rev = u._rev ? u._rev:undefined;
   this.level = u.level || 1;
+  this._id = u._id? u._id: undefined;
+  if (this._rev === undefined) delete this._rev
+  if (this._id === undefined) delete this._id
   return this;
 }
 
+var buildP = function(password, salt) {
+  return md5(password.trim() + (salt + ''));
+}
+var buildP64 = function(password,salt){
+  return new Buffer(password.trim() + ( '' + salt).substr(-3)).toString('base64'); 
+}
+var updateUser = function(u,c,r){
+  console.log(c)
+  /*
+  c =>
+{ password: 'Bienvenido',
+  username: 'alejandromg',
+  name: 'Alejandro Morales',
+  nopassword: [ '', '' ],
+  contact: 'http://alejandromorales.co.cc',
+  email: 'vamg008@gmail.com',
+  bio: 'Soy Yo' }
+
+  */
+  var user = new User(u);
+  // Son distintos los nuevos passwords?
+       if (c.nopassword[0].trim() !== c.nopassword[1].trim()){
+            c.nopassword[0] = c.nopassword[1] = user.password;
+          } 
+          // El nuevo password es una empty string?
+  else if (c.nopassword[0].trim() === '') { 
+         c.nopassword[0] = user.password; } 
+         // el usuario esta vacio
+  else if (c.username.trim() === '') { c.username = user.username;}
+        // el email vacio
+  else if (c.email.trim() === '') { c.email = user.email; } 
+        // Bio vacio
+  else if (c.bio.trim()=== '' && c.bio.trim() !== user.bio.trim()){ 
+            c.bio = c.bio }
+  else    {  c.bio = user.bio || 'Soy ' + use.name;}
+// Siempre priorizar los datos previos a los nuevos...
+ user.password = c.nopassword[1] === c.nopassword[0] 
+                 ? buildP(c.nopassword[1]) : user.password;
+ user.username = c.username === user.username ? user.username :c.username;
+ user.contact  = c.contact === user.contact ? user.contact :c.contact;
+ user.email    = c.email === user.email ? user.email :c.email;
+ user.bio      = c.bio === user.bio ? user.bio:c.bio;
+ user.name     = c.name.trim()=== ''?user.name : c.name;
+  try {
+    users.insert(user, function(error, resp){
+      if (error) {
+        r(error,null);
+      } else {
+        r(null, resp);
+      }
+    });
+  } catch(excp){
+    r(excp, null);
+  }
+}
 var giveMeLabels = function giveMeLabels(text) {
   if (!text) return [];
   /* split (s) para espacios*/
@@ -274,7 +348,7 @@ var giveMeLabels = function giveMeLabels(text) {
 }
 var Post = function(p,req,n) {
   this.date = p.fecha;
-  this.id = prettyTitle(p.titulo);
+  this._id = this.id = prettyTitle(p.titulo);
   this.title = p.titulo;
   // it's new?
   if (n) {
@@ -333,36 +407,34 @@ app.get('/tag/:tag',function(req,res){
     }
   });
 });
+
 app.post('/u/new(*)',function(req,res){
-  console.log(req.body)
-});
-app.post('/us/new(*)',function(req,res){
-  if (isJSON(req.url) &&req.session.level === 4) {
+  if (req.session.user.level === 4) {
     if (req.body){
+
       /*
        * A user has this params
        * 
-       { 
-         _id: 'alejandromg',
-          _rev: '1-45a1cfc7cc8931d888171eb0147a2ddf',
-          username: 'alejandromg',
-          name: 'Alejandro Morales',
-          email: 'vamg008@gmail.com',
-          contact: 'http://alejandromorales.co.cc',
-          bio: 'Soy Alejandro Morales',
-          posts: [],
-          popular: 1,
-          id: '06750fa4060150f1466c976d7e7e2eb0' 
-      }
-
+       { name: 'Alejandro Morales',
+  email: 'vamg008@gmail.com',
+  username: 'alejandromg' }
       */
+      
       var rb       = req.body,
           username = rb.username, 
           ruser = new User(rb,true);
-          ruser = couchdb.toJSON(ruser);
-      users.getDoc(username, function(error,ok){
-        if (error && error.error = 'not_found'){
-          users.saveDoc(username, ruser, function(error,ok){
+      users.view('username','auth',{key:username,limit:1}, function(error,ok){
+        /*
+        { total_rows: 1,
+  offset: 0,
+  rows: 
+   [ { id: '36183ae5c2206b01caa391ac710083df',
+       key: 'alejandromg',
+       value: [Object] } ] }
+
+        */
+        if (ok && ok.offset === 1){
+          users.insert(ruser, function(error,ok){
             if (error){
               res.json({code:500, status:error});
             } else {
@@ -370,11 +442,12 @@ app.post('/us/new(*)',function(req,res){
             }
           });
         } else {
-            res.json({code:500, status:'Usuario ya existe'});        
+            res.json({code:500, status:'Usuario ya existe'});
         }
       })
     } else {
       res.json({status:"Invalid Request"});
+
     }
   } else {
     res.json(["No PERMITIDO"])
@@ -407,7 +480,7 @@ app.post('/b/new',function(req,res){
   if (isJSON(req.url)){
     res.json({'status':'No implementeda'});
   } else if (req.session.user_id) {
-    db.saveDoc(post.id, post, function(err,data){
+    db.insert(post, function(err,data){
       if (err) {
         res.json(err);
       } else {
@@ -432,17 +505,19 @@ app.post('/login',function(req,res){
           return md5(pass + salt);
         }
       }
-    users.getDoc(u, function(er, doc) {
+    users.view('username','auth',{key:u,limit:1}, function(er, doc) {
+      doc = doc.rows[0].value;
       if (er) {
         res.json(er);
-      } else if (doc.verified && (doc.password === pass || checkPass(pass, doc.salt))) {
+      } else if (doc.verified && (doc.password === checkPass(pass, doc.salt) 
+                || doc.password === pass) ) {
         req.session.user_id = doc._id;
         req.session._rev = doc._rev;
         req.session.user = doc;
         req.session.username = doc.username;
         res.redirect('/admin');
       } else {
-        res.json({status:'forbidden'})
+        res.json({status:'forbidden, bad auth'})
       }
     });
 
@@ -470,7 +545,37 @@ app.get('/logout',function(req,res){
   }
   res.redirect('/');
 });
-
+app.post('/u/update(*)',function(req,res){
+var c = req.body,
+    sta  ='',
+    inf    ='',
+    s = req.session.user;
+    console.log(s.salt)
+  if (c.nopassword[0] !== c.nopassword[1]) {
+     res.json({status:'Error',info:'nuevos password no concuerdan'});
+  } else if (buildP64(c.password,s.salt) === s.password 
+          || buildP(c.password,s.salt) === s.password 
+          || c.password === s.password) {
+    updateUser(req.session.user, c, function(err,resp){
+      if (err) {
+        sta = 'Error'; 
+        inf=err;
+      } else {
+        sta = 'ok'; 
+        inf='Updated';
+        users.get(resp.id, function(e,c){
+          req.session.user_id = c._id;
+          req.session._rev = c._rev;
+          req.session.user = c;
+          req.session.username = c.username;
+        });
+      }
+      res.json({status:sta, info:inf})
+    })
+  } else {
+    res.json({status:'Error',info:'Tu password actual no concuerda'});
+  }
+});
 app.get('/*',function(req,res,next){
   // parse integer and see if it's a date the toString and check length
   var checkUrl = url.parse(req.url).path.split('/').length;
@@ -485,7 +590,7 @@ app.get('/*',function(req,res,next){
     }
   rdate.date = rdate.day+'-'+ rdate.month + '-'+rdate.year;
   if ( checkId === 8 && checkUrl === 2) {
-    db.getDoc(id,function(error,post){
+    db.get(id,function(error,post){
       if (error){
         res.json({status:'not_found'});
       } else { 
@@ -494,7 +599,10 @@ app.get('/*',function(req,res,next){
             html.push(md(post.content,true)); 
         } catch(exc){ html.push('ERROR')}
         post.views += 1;
-        db.saveDoc(id, post);
+        db.insert(post,function(err,b){
+            if (err) console.log(err)
+            else return true; 
+        });
         res.render('posts/index',{
           bodyContent: html.join(''),
           post: post,
@@ -524,4 +632,5 @@ app.get('/*',function(req,res,next){
     next();
   }
 });
+
 app.listen(process.PORT || 8000);

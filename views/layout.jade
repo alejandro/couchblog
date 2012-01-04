@@ -36,6 +36,8 @@ html
             a.rss(href='http://feeds.feedburner.com/nodehispano') RSS Feed
             a.youtube(href='http://youtube.com/nodehispano', youtube='Youtube', channel='Channel')
             a.github(href='https://github.com/github') Github
+            - if (session.user)
+              a.button.red.small.radius(style="color:white !important",href="/logout") Cerrar Sesión
         - try {
           - if (row)
             section.body-index.row!= body
