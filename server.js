@@ -614,17 +614,20 @@ if (process.env.NODE_ENV=== 'production'){
 app.get('/*',function(req,res,next){
   // parse integer and see if it's a date the toString and check length
   console.log(req.url)
-  var checkUrl = url.parse(req.url).path.split('/').length;
-  var id = url.parse(req.url).path.split('/')[1];
-  var checkId  = parseInt(id.substr(0,8)).toString().length;
-  var rdate  = id.substr(0,8),
-  rdate = {
-      now: rdate,
-      year: rdate.substr(0,4), 
-      month: getMonth(rdate.substr(-4).substr(0,2)),
-      day: rdate.substr(-2),
-    }
+  var checkUrl =0,id,checkId = 0,rdate;
+  try { 
+     checkUrl = req.url.split('/').length;
+     id       = req.url.split('/')[1];
+     checkId  = parseInt(id.substr(0,8)).toString().length;
+     rdate    = id.substr(0,8),
+     rdate    = {
+                  now: rdate,
+                  year: rdate.substr(0,4), 
+                  month: getMonth(rdate.substr(-4).substr(0,2)),
+                  day: rdate.substr(-2),
+                }
   rdate.date = rdate.day+'-'+ rdate.month + '-'+rdate.year;
+  } catch(excp) { }
   if ( checkId === 8 && checkUrl === 2) {
     db.get(id,function(error,post){
       if (error){
@@ -647,7 +650,8 @@ app.get('/*',function(req,res,next){
       }
     });
   } else {
-    var u = req.url.split('.');
+    var u =[];
+    try { u = req.url.split('.');} catch(excp) {}
     if (u[u.length - 1] === req.url) {
       res.redirect('/404')
       // Yes, I'm to lazy to generate a new [dot]jade file to a 404 error
