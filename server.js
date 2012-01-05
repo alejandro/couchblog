@@ -574,44 +574,6 @@ var c = req.body,
     res.json({status:'Error',info:'Tu password actual no concuerda'});
   }
 });
-app.get('/*',function(req,res,next){
-  // parse integer and see if it's a date the toString and check length
-  var checkUrl = url.parse(req.url).path.split('/').length;
-  var id = url.parse(req.url).path.split('/')[1];
-  var checkId  = parseInt(id.substr(0,8)).toString().length;
-  var rdate  = id.substr(0,8),
-  rdate = {
-      now: rdate,
-      year: rdate.substr(0,4), 
-      month: getMonth(rdate.substr(-4).substr(0,2)),
-      day: rdate.substr(-2),
-    }
-  rdate.date = rdate.day+'-'+ rdate.month + '-'+rdate.year;
-  if ( checkId === 8 && checkUrl === 2) {
-    db.get(id,function(error,post){
-      if (error){
-        res.json({status:'not_found'});
-      } else { 
-        var html=[];
-        try {
-            html.push(md(post.content,true)); 
-        } catch(exc){ html.push('ERROR')}
-        post.views += 1;
-        db.insert(post,function(err,b){
-            if (err) console.log(err)
-            else return true; 
-        });
-        res.render('posts/index',{
-          bodyContent: html.join(''),
-          post: post,
-          date: rdate
-        });
-      }
-    });
-  } else {
-    next()
-  }  
-});
 
 process.on('uncaughtException', function(excp, req,res) {
   console.log(excp.message)
@@ -648,14 +610,51 @@ app.error(function(err, req, res, next){
 if (process.env.NODE_ENV=== 'production'){
   process.PORT = 13412;
 }
+
 app.get('/*',function(req,res,next){
-  var u = req.url.split('.');
-  if (u[u.length - 1] === req.url) {
-    res.redirect('/404')
-    // Yes, I'm to lazy to generate a new [dot]jade file to a 404 error
+  // parse integer and see if it's a date the toString and check length
+  console.log(req.url)
+  var checkUrl = url.parse(req.url).path.split('/').length;
+  var id = url.parse(req.url).path.split('/')[1];
+  var checkId  = parseInt(id.substr(0,8)).toString().length;
+  var rdate  = id.substr(0,8),
+  rdate = {
+      now: rdate,
+      year: rdate.substr(0,4), 
+      month: getMonth(rdate.substr(-4).substr(0,2)),
+      day: rdate.substr(-2),
+    }
+  rdate.date = rdate.day+'-'+ rdate.month + '-'+rdate.year;
+  if ( checkId === 8 && checkUrl === 2) {
+    db.get(id,function(error,post){
+      if (error){
+        res.json({status:'not_found'});
+      } else { 
+        var html=[];
+        try {
+            html.push(md(post.content,true)); 
+        } catch(exc){ html.push('ERROR')}
+        post.views += 1;
+        db.insert(post,function(err,b){
+            if (err) console.log(err)
+            else return true; 
+        });
+        res.render('posts/index',{
+          bodyContent: html.join(''),
+          post: post,
+          date: rdate
+        });
+      }
+    });
   } else {
-    next();
-  }
+    var u = req.url.split('.');
+    if (u[u.length - 1] === req.url) {
+      res.redirect('/404')
+      // Yes, I'm to lazy to generate a new [dot]jade file to a 404 error
+    } else {
+      next();
+    }
+  } 
 });
 
 
