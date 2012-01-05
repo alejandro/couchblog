@@ -4,7 +4,7 @@
   "scripts": {
     "start": "server.js"
   },
-  "version": "0.0.1-5",
+  "version": "0.0.1-7",
   "dependencies": {
     "node-markdown": "0.1.x",
     "jade": "0.20.x",
