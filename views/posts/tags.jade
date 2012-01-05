@@ -1,6 +1,11 @@
 - try {
-  h3 Tag =>  
-    a(href="/tag/"+ tag, title=tag) #{tag}
+  - if (!rtag) {
+    h3 Usuario =>
+      a(href="/user" + tag,title=tag) #{tag}
+  - } else {
+    h3 Tag =>  
+      a(href="/tag/"+ tag, title=tag) #{tag}
+  -}
 - } catch (exc){}
 - posts.forEach(function(post){
   article
@@ -24,7 +29,7 @@
     div
       p.meta
         | Este post fue escrito por
-        a(href=post.author.contact) #{post.author.name}  
+        a(href='/user/'+post.author.contact) #{post.author.name}  
         | en
         span.categories
         - try {
