@@ -13,17 +13,16 @@ if (process.env.NODE_ENV === 'production'){
             ssl:  false,
             user: "alejandromg",
             pass: "nhispano"
-          };
+          };  
  couchAuthUrl   = 'http://' +cfg.user + ':' +cfg.pass + '@' + cfg.host + ':' + cfg.port;
 }
 
 var express        = require('express'),
-    resourceful    = require('resourceful'),
     crypto         = require('crypto'),
     fs             = require('fs'),
     url            = require('url'),
     md             = require('node-markdown').Markdown,
-    nano           = require('nano')(couchAuthUrl || 5984,'localhost'),
+    nano           = require('nano')(couchAuthUrl),
     ConnectCouchDB = require('connect-couchdb')(express),
     db             = nano.use('blog'),
     users          = nano.use('users');
@@ -372,6 +371,7 @@ var Post = function(p,req,n) {
 }
 app.get('/',function(req,res){
   getLatest(function(err,data){
+    console.log(err)
     if (err) {
       res.redirect('/500');
     } else {
@@ -622,5 +622,16 @@ app.get('/*',function(req,res,next){
     next();
   }
 });
-
+process.on('uncaughtException', function(excp, req,res) {
+  console.log(excp.message)
+  console.log(excp.stack)
+});
+if (process.env.NODE_ENV=== 'production'){
+  app.use(function(err, req, res) {
+    if (err) {
+      console.log(err)
+    }
+  });
+}
 app.listen(process.PORT || 8000);
+console.info('Kennedy: Puerto: %s \nKennedy: Ambiente: %s', app.address().port , process.env.NODE_ENV);

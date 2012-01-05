@@ -1,11 +1,14 @@
 {
-  "name":"NodeHispano",
-  "version":"0.0.1",
-  "author":"Alejandro Morales <vamg008@gmail.com>",
-  "dependencies":{
-    "express":"*",
-    "jade":"*",
-    "resourceful":"*",
-    "felix-couchdb":"*"
+  "name": "kennedy",
+  "subdomain": "fdwblog",
+  "scripts": {
+    "start": "server.js"
+  },
+  "version": "0.0.1-2",
+  "dependencies": {
+    "node-markdown": "0.1.x",
+    "nano": "1.1.x",
+    "express": "2.5.x",
+    "connect-couchdb": "0.2.x"
   }
 }
