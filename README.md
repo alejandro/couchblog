@@ -2,6 +2,9 @@
 
 A small and beautiful blog generator built on top of [couchdb](http://couchdb.apache.org) and [node.js](http://nodejs.org).
 
+## Live example
+
+- [Node Hispano alike](http://fwdblog.jit.su)
 ## Installation
 
     > git clone alejandromg/couchblog
@@ -34,9 +37,13 @@ Open [http://localhost:8000](http://localhost:8000) and there you go. Go to [htt
 and more...
 
 
-# Contributors
+## Contributors
 
 -  [Alejandro Morales][2] 
+
+### Special Thanks to
+
+[nodejitsu](http://nodejitsu.com)
 
 # Licence
 
