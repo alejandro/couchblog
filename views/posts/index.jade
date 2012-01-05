@@ -9,7 +9,7 @@ article
       span.views  | Views: #{post.views}  
       span.up  |  #{post.up} 
       span.down |  #{post.down} 
-      span.comments
+      span.comments |  
           a(href="/"+ post.id +"#disqus_thread",  data-disqus-identifier=post.title)
        
     h1.entry-title
@@ -34,7 +34,7 @@ article
         a.category(href='/tag/') sin tags
       - }
       | con
-      a(href='/'+ post.id+'#disqus_thread', data-disqus-identifier='http://nodehispano.com/' + post.id )  1 Comment
+      a(href='/'+ post.id+'#disqus_thread', data-disqus-identifier='http://fdwblog.nodejitsu.com/' + post.id )
       | . Si te gustaria actualizar o modificar haz un
       a(href='#') pull request
       | .
