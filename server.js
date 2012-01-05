@@ -613,8 +613,8 @@ if (process.env.NODE_ENV=== 'production'){
 
 app.get('/*',function(req,res,next){
   // parse integer and see if it's a date the toString and check length
-  console.log(req.url)
   var checkUrl =0,id,checkId = 0,rdate;
+  // BUg in production see 0d0ff8e for last sane version
   try { 
      checkUrl = req.url.split('/').length;
      id       = req.url.split('/')[1];
