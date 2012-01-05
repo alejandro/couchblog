@@ -69,7 +69,7 @@ app.configure('development', function(){
 });
 
 app.configure('production', function(){
-  app.use(express.errorHandler()); 
+  app.use(express.errorHandler({dumpExceptions:true})); 
 });
 function NotFound(msg){
   this.name = 'NotFound';
@@ -375,7 +375,7 @@ var Post = function(p,req,n) {
 }
 app.all('*',function(req,res,next){
   if (res.statusCode === 500){
-    console.log(res);
+    throw new Error();
   } 
   next()
 });
@@ -612,22 +612,23 @@ app.get('/*',function(req,res,next){
     next()
   }  
 });
-/*app.get('/*',function(req,res,next){
-  var u = req.url.split('.');
-  if (u[u.length - 1] === req.url) {
-    throw new NotFound
-    // Yes, I'm to lazy to generate a new [dot]jade file to a 404 error
-  } else {
-    next();
-  }
-});*/
+
 process.on('uncaughtException', function(excp, req,res) {
   console.log(excp.message)
   console.log(excp.stack)
 });
 
 app.get('/404', function(req, res){
-  throw new NotFound;
+   res.writeHeader(404,{"Content-type":"text/html"});
+  res.write('<title>404 No Encontrado - Node Hispano </title>')
+  res.write('<style>html{background-image: url(/images/bg.png);}');
+  res.write('div{text-align:center;padding-top:200px;width:100%;font-size:2em;}')
+  res.write('h4 {font-family:arial; text-shadow:1px 1px #fff;color:#444}')
+  res.write('#footer { font-family: arial;font-size: 0.9em;} a{text-decoration:none}</style>');
+  res.write('<div><img src="http://nodejs.org/logos/nodejs.png">');
+  res.write('<h4>404 - No Encontrado</h4></div>');
+  res.write('<div id="footer"><a href="/">Node Hispano</a> &hearts; node.js</h4></div>');
+  res.end();
 });
 
 app.get('/500', function(req, res){
@@ -635,16 +636,7 @@ app.get('/500', function(req, res){
 });
 app.error(function(err, req, res, next){
   if (err instanceof NotFound) {
-      res.writeHeader(404,{"Content-type":"text/html"});
-      res.write('<title>404 No Encontrado - Node Hispano </title>')
-      res.write('<style>html{background-image: url(/images/bg.png);}');
-      res.write('div{text-align:center;padding-top:200px;width:100%;font-size:2em;}')
-      res.write('h4 {font-family:arial; text-shadow:1px 1px #fff;color:#444}')
-      res.write('#footer { font-family: arial;font-size: 0.9em;} a{text-decoration:none}</style>');
-      res.write('<div><img src="http://nodejs.org/logos/nodejs.png">');
-      res.write('<h4>404 - No Encontrado</h4></div>');
-      res.write('<div id="footer"><a href="/">Node Hispano</a> &hearts; node.js</h4></div>');
-      res.end();
+     res.redirect('/404')
   } else {
     if (err) {
       res.end('500 Internal server Error \n' + err )
@@ -654,9 +646,17 @@ app.error(function(err, req, res, next){
   }
 });
 if (process.env.NODE_ENV=== 'production'){
- 
   process.PORT = 13412;
 }
+app.get('/*',function(req,res,next){
+  var u = req.url.split('.');
+  if (u[u.length - 1] === req.url) {
+    res.redirect('/404')
+    // Yes, I'm to lazy to generate a new [dot]jade file to a 404 error
+  } else {
+    next();
+  }
+});
 
 
 app.listen(process.PORT || 8000);
