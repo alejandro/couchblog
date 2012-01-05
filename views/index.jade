@@ -21,7 +21,7 @@
     div
       p.meta
         | Este post fue escrito por
-        a(href=post.author.contact) #{post.author.name}  
+        a(href='/user/' + post.author.contact,title="Ve más posts de " + post.author.name) #{post.author.name}  
         | en
         span.categories
         - try {
