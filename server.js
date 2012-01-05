@@ -157,34 +157,11 @@ var mdRender = function(md){
   return md(md, true);
 }
 var isJSON = function(url) {
-  return url.split('.')[1] === 'json'
+  return url.split('.')[1] === 'json';
 }
 
 var md5 = module.exports.md5 = function(str) {
   return crypto.createHash('md5').update(str).digest('hex');
-}
-var getSortByAuthor = function (resp){
-  var sort = []
-  db.view('author','Author',{descending:true}, function(err,cb){
-      var author =[];
-    if (err){
-      resp('Not_Found',null)
-    } else {
-      cb.rows.forEach(function(item){
-        var index = author.indexOf(item.key);
-        if (index === -1 ) { 
-          author.push(item.key)
-          sort.push({name:item.key, count:1,link:[item.id]})
-          } else {
-            sort[index].count += 1; 
-            sort[index].link.push(item.id)
-          }
-        if ((cb.rows.length -1)=== cb.rows.indexOf(item)) {
-          resp(null, sort);
-        }
-      });
-    }
-  });
 }
 var normalizeDate = function(d) {
   try {
@@ -200,14 +177,9 @@ var normalizeDate = function(d) {
   }
 }
 var normalizeData = function(item){
-  var html = '';
-  try {
-    html = md(item.value[1],true);
-  } catch(exp) {
-    html = '<p>Sin descripción</p>'
-  }
+  var html = item.value[1];
   return {
-          id:item.id, 
+          id:item._id || item.id, 
           title:item.value[0], 
           description:html,
           views: item.value[2],
@@ -221,6 +193,26 @@ var normalizeData = function(item){
           date: normalizeDate(item.value[8] || item.key)
         }
 }
+var getSortByAuthor = function (target, resp){
+  var posts = []
+  db.view('author','Author',{key: target, descending:true}, function(err,cb){
+      var author =[];
+    if (err){
+      resp(err,null)
+    } else if (cb.rows.length === 0 ) {
+      resp(new Error('Not_Found'),null)
+    } else {
+      cb.rows.forEach(function(item){
+        posts.push(normalizeData(item));
+        if ((cb.rows.length -1)=== cb.rows.indexOf(item)) {
+            resp(null, posts);
+        }
+      });
+    }
+  });
+}
+
+
 var getLatest =function(resp){
   var posts =[]
   db.view('latest','latest',{limit:8,descending:true},function(err,cb){
@@ -229,13 +221,15 @@ var getLatest =function(resp){
     } else {
       if (cb.total_rows === 0){
         resp(null, [])
+      } else if (cb.rows.length === 0) {
+        resp(new Error('not_found'),null);
       } else {
         cb.rows.forEach(function(item){
           // Normalizar data
           posts.push(normalizeData(item));
-         if ((cb.rows.length -1)=== cb.rows.indexOf(item)) {
-          resp(null, posts);
-         }
+          if ((cb.rows.length -1)=== cb.rows.indexOf(item)) {
+            resp(null, posts);
+          }
         });
       }
     }
@@ -245,9 +239,10 @@ var getByTag =function(tag,resp){
   var posts =[];
   var url = '/_design/tags/_view/tags';
   db.view('tags','tags',{key: tag.trim(),limit:8,descending:true},function(err,cb){
-    console.log(err || cb)
     if (err) {
       resp(err, null)
+    } else if (cb.rows.length === 0){
+        resp(new Error('not_found'),null);
     } else {
       cb.rows.forEach(function(item){
         // Normalizar data
@@ -358,8 +353,19 @@ var Post = function(p,req,n) {
   // it's new?
   if (n) {
     this.tags = giveMeLabels(p.tags || 'sin tags'); // array with tags
-  } else this.tags = p.tags || 'sin tags';
-  this.content = p.contenido; // Saved raw then try to compile when render
+    // try better to encode to html instead of render on "every" request
+    // seems legit, plus I think I'm saving some ms.
+    try {
+      this.content = md(p.contenido,true);
+    } catch (excp) {
+      console.log(excp);
+      this.content = p.contenido;
+    }
+  } else {
+    this.tags = p.tags || 'sin tags';
+    this.content = p.content || 'No content'
+  }
+
   var u=req.session.user;
   u.posts.push(this.id);
   this.author = p.author || { username : u.username,
@@ -400,9 +406,10 @@ app.get('/',function(req,res){
 app.get('/tag/:tag',function(req,res){
   var tag = req.params.tag;
   getByTag(tag, function(error,data){
-    if(error){
-      console.log(error + ' tag')
-      res.redirect('/500');
+    if(error && error.message === 'not_found'){
+      res.redirect('/404');
+    } else if (error) {
+      res.redirect('/500')
     } else {
       res.render('posts/tags',{
         date: { 
@@ -418,7 +425,29 @@ app.get('/tag/:tag',function(req,res){
     }
   });
 });
-
+app.get('/user/:user',function(req,res){
+  getSortByAuthor(req.params.user, function(err,resp){
+    if (err && err.message === 'Not_Found') {
+      res.redirect('/400');
+    } else if (err) {
+      res.redirect('/500');
+    } else {
+      console.log(resp)
+      res.render('posts/tags',{
+        date: { 
+          now: new Date(),
+          month : 'Enero'.substr(0,3), // TODO: Delete this
+          day: "01",
+          year: "2012"
+        },
+        posts: resp,
+        title:"Node Hispano",
+        tag:req.params.user,
+        rtag: false
+      }); 
+    }
+  });
+});
 app.post('/u/new(*)',function(req,res){
   if (req.session.user.level === 4) {
     if (req.body){
@@ -505,15 +534,22 @@ app.post('/login',function(req,res){
         }
       }
     users.view('username','auth',{key:u,limit:1}, function(er, doc) {
-      doc = doc.rows[0].value;
+      try { doc = doc.rows[0].value; } catch(excp) {}
       if (er) {
         res.json(er);
       } else if (doc.verified && (doc.password === checkPass(pass, doc.salt) 
                 || doc.password === pass) ) {
         req.session.user_id = doc._id;
-        req.session._rev = doc._rev;
-        req.session.user = doc;
         req.session.username = doc.username;
+        with (doc) {
+          delete  salt;
+          delete password;
+          delete popular; 
+          delete _rev;
+          delete _id;
+          delete verified;
+        }
+        req.session.user = doc;
         res.redirect('/admin');
       } else {
         res.json({status:'forbidden, bad auth'})
@@ -594,7 +630,16 @@ app.get('/404', function(req, res){
 });
 
 app.get('/500', function(req, res){
-  throw new Error('keyboard cat!');
+  res.writeHeader(404,{"Content-type":"text/html"});
+  res.write('<title>404 No Encontrado - Node Hispano </title>')
+  res.write('<style>html{background-image: url(/images/bg.png);}');
+  res.write('div{text-align:center;padding-top:200px;width:100%;font-size:2em;}')
+  res.write('h4 {font-family:arial; text-shadow:1px 1px #fff;color:#444}')
+  res.write('#footer { font-family: arial;font-size: 0.9em;} a{text-decoration:none}</style>');
+  res.write('<div><img src="http://nodejs.org/logos/nodejs.png">');
+  res.write('<h4>500 - Internal Server Error</h4></div>');
+  res.write('<div id="footer"><a href="/">Node Hispano</a> &hearts; node.js</h4></div>');
+  res.end();
 });
 app.error(function(err, req, res, next){
   if (err instanceof NotFound) {
@@ -633,17 +678,13 @@ app.get('/*',function(req,res,next){
       if (error){
         res.json({status:'not_found'});
       } else { 
-        var html=[];
-        try {
-            html.push(md(post.content,true)); 
-        } catch(exc){ html.push('ERROR')}
         post.views += 1;
         db.insert(post,function(err,b){
-            if (err) console.log(err)
+            if (err) console.log(err);
             else return true; 
         });
         res.render('posts/index',{
-          bodyContent: html.join(''),
+          bodyContent: post.content,
           post: post,
           date: rdate
         });

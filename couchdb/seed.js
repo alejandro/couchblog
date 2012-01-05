@@ -1,32 +1,34 @@
-var cfg = {
-  host:'localhost',
-  port:5984
-},
-couchAuthUrl = cfg.host;
+/*
+ * Couchblog 
+ * @author : Alejandro Morales <vamg008@gmail.com>
+ * @date: 5-ene-2012
+ * @name: seed.js
+ * @licence: MIT
+ *
+*/
+
+//
+// Be sure that you have already modify the config.js file
+//
+
+var cfg          = {
+                     host:'localhost',
+                     port:5984
+                   },
+    couchAuthUrl = cfg.host,
+    config       = require('./config');
+
 if (process.env.NODE_ENV==='production') {
-   cfg          =  { 
-                      host: "nhispano.iriscouch.com"
-                    , port: "80"
-                    , ssl:  false
-                    , user: "alejandromg"
-                    , pass: "nhispano"
-                    };
-  couchAuthUrl = 'http://' +cfg.user + ':' + cfg.pass + '@' + cfg.host + ':' + cfg.port;
+   cfg          = config.db;
+   couchAuthUrl = 'http://' +cfg.user + ':' + cfg.pass + '@' + cfg.host + ':' + cfg.port;
 }
- var   cnfg         =  {
-                      user: 'admin',
-                      name:'Sushi Roboto',
-                      email:'sushi@example.com',
-                      contact: 'http://example.com',
-                    },
-    
+
+var cnfg         =  config.user,
     nano         = require('nano')(couchAuthUrl),
     toSeed       = ['blog','users','sessions'],
     ready        =[];
 
-
 console.log('\n\n\033[90m[seed]  : Solamente ejecuta este archivo una vez \033[39m' )
-
 var seedDatabase = function (){
   nano.db.list(function(err,res){
     if (err) {
@@ -60,7 +62,19 @@ var views = {
        "language": "javascript",
        "views": {
            "tags": {
-               "map": "function(doc) {  \n  var tag,key;\n  for (tag in doc.tags) {\n    if (doc.description){\n      key= [doc.title, doc.description,doc.views,doc.up,doc.down,doc.author.name, doc.author.contact,doc.tags,doc.date]\n    } else {\n      key = [doc.title,'',doc.views,doc.up,doc.down,doc.author.name, doc.author.contact,doc.tags,doc.date]\n    }\n    emit(doc.tags[tag], key)\n  }\n}"
+               "map": "function(doc) {  \n  "+
+                      "  var tag,key;\n "+
+                      "  for (tag in doc.tags) {\n   "+
+                      "    if (doc.description){\n "+
+                      "      key= [doc.title, doc.description,doc.views,doc.up,"+
+                      "doc.down,doc.author.name, doc.author.username,doc.tags,doc.date]\n"+
+                      "    } else {\n    "+
+                      "      key = [doc.title,'',doc.views,doc.up,doc.down,"+
+                      "doc.author.name, doc.author.username,doc.tags,doc.date]\n "+
+                      "    }\n"+
+                      "   emit(doc.tags[tag], key)\n "+
+                      " }\n"+
+                      "}"
            }
         }
       },
@@ -69,7 +83,16 @@ var views = {
        "language": "javascript",
        "views": {
            "latest": {
-               "map": "function(doc) {  \n  var key;\n  if (doc.description) {\n\t key =  [doc.title, doc.description,doc.views,doc.up,doc.down,doc.author.name, doc.author.contact,doc.tags] \n  } else {\n   key = doc.title\n  }\n  emit(doc.date, key);\n}"
+               "map": "function(doc) {\n"+
+                      "  var key;\n"+
+                      "  if (doc.description) {\n"+
+                      "\t  key =  [doc.title, doc.description,doc.views,"+
+                      "doc.up,doc.down,doc.author.name, doc.author.username,doc.tags] \n"+
+                      "  } else {\n"+
+                      "    key = doc.title\n"+
+                      "  }\n"+
+                      "  emit(doc.date, key);\n"+
+                      "}"
            }
        }
     },
@@ -78,7 +101,11 @@ var views = {
        "language": "javascript",
        "views": {
            "Author": {
-               "map": "function(doc) {\n  emit(doc.author.username, doc._id);\n}"
+               "map": "function(doc) {\n" +
+                      "value= [doc.title, doc.description,doc.views,doc.up," +
+                      "doc.down,doc.author.name, doc.author.username,doc.tags,"+
+                      "doc.date,doc._id];\n emit(doc.author.username, value);\n" + 
+                      "}"
            }
        }
     }
@@ -128,7 +155,7 @@ var setDefaultUser = function(){
        "contact": cnfg.contact,
        "bio": "Soy " + cnfg.name, 
        "posts": [],
-       "popular":1,
+       "popular":1, 
        "level": 4,
        "salt": 1325556595339,
        "password": "QmllbnZlbmlkbzMzOQ==",
@@ -159,7 +186,9 @@ var defaultpost = {
    "tags": [
        "hola mundo"
    ],
-   "content": "**Default Post**, este post esta escrito en [markdown](http://daringfireball.net/projects/markdown)",
+   "content": "<h4>Default Post</h4><p>Este puede estar escrito en" +
+              "<a href='http://daringfireball.net/projects/markdown)'> markdown</a>"+
+              " o no </p>",
    "author": {
        "username": cnfg.user,
        "posts": [
@@ -169,7 +198,8 @@ var defaultpost = {
        "bio": "Soy "+ cnfg.name,
        "name": cnfg.name
    },
-   "description":"**Default Post**, este post esta escrito en [markdown](daringfireball.net/projects/markdown)",
+   "description":"<h4>Default Post</h4><p>Este puede estar escrito en" +
+              "<a href='http://daringfireball.net/projects/markdown)'> markdown</a>",
    "up": 1,
    "views": 5,
    "down": 0,
@@ -186,4 +216,6 @@ var defaultPost = function(){
     }
   });
 }
+
+// Sembrar Basededatos
 seedDatabase()
