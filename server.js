@@ -373,6 +373,11 @@ var Post = function(p,req,n) {
   this.down = p.down || 0;
   this.percentil = (this.up - this.down);
 }
+app.all('*',function(req,res,next){
+  if (res.statusCode === 500){
+    console.log(res);
+  }
+});
 app.get('/',function(req,res){
   getLatest(function(err,data){
     if (err) {
