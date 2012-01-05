@@ -376,7 +376,8 @@ var Post = function(p,req,n) {
 app.all('*',function(req,res,next){
   if (res.statusCode === 500){
     console.log(res);
-  }
+  } 
+  next()
 });
 app.get('/',function(req,res){
   getLatest(function(err,data){
