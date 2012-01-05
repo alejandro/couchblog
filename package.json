@@ -4,7 +4,7 @@
   "scripts": {
     "start": "server.js"
   },
-  "version": "0.0.1-2",
+  "version": "0.0.1-3",
   "dependencies": {
     "node-markdown": "0.1.x",
     "nano": "1.1.x",

@@ -50,7 +50,7 @@ app.configure(function(){
   app.set('views',__dirname+ '/views');
   app.set('view engine','jade');
   app.set('view options',{pretty :true});
-  app.use(app.router);
+  app.use(app.router); 
   app.use(express.static(__dirname+'/public'));
   app.use(express.methodOverride());
   app.use(express.favicon());
@@ -71,6 +71,12 @@ app.configure('development', function(){
 app.configure('production', function(){
   app.use(express.errorHandler()); 
 });
+function NotFound(msg){
+  this.name = 'NotFound';
+  Error.call(this, msg);
+  Error.captureStackTrace(this, arguments.callee);
+}
+NotFound.prototype.__proto__ = Error.prototype;
 
 var getMonth = function(m){
   m = (parseInt(m) === NaN) ? m : parseInt(m);
@@ -219,7 +225,6 @@ var getLatest =function(resp){
   var posts =[]
   db.view('latest','latest',{limit:8,descending:true},function(err,cb){
     if (err) {
-      console.log(err)
       resp(err, null)
     } else {
       if (cb.total_rows === 0){
@@ -289,7 +294,6 @@ var buildP64 = function(password,salt){
   return new Buffer(password.trim() + ( '' + salt).substr(-3)).toString('base64'); 
 }
 var updateUser = function(u,c,r){
-  console.log(c)
   /*
   c =>
 { password: 'Bienvenido',
@@ -371,7 +375,6 @@ var Post = function(p,req,n) {
 }
 app.get('/',function(req,res){
   getLatest(function(err,data){
-    console.log(err)
     if (err) {
       res.redirect('/500');
     } else {
@@ -392,7 +395,7 @@ app.get('/tag/:tag',function(req,res){
   var tag = req.params.tag;
   getByTag(tag, function(error,data){
     if(error){
-      console.log(error)
+      console.log(error + ' tag')
       res.redirect('/500');
     } else {
       res.render('posts/tags',{
@@ -540,7 +543,6 @@ var c = req.body,
     sta  ='',
     inf    ='',
     s = req.session.user;
-    console.log(s.salt)
   if (c.nopassword[0] !== c.nopassword[1]) {
      res.json({status:'Error',info:'nuevos password no concuerdan'});
   } else if (buildP64(c.password,s.salt) === s.password 
@@ -604,34 +606,49 @@ app.get('/*',function(req,res,next){
     next()
   }  
 });
-app.get('/*',function(req,res,next){
+/*app.get('/*',function(req,res,next){
   var u = req.url.split('.');
   if (u[u.length - 1] === req.url) {
+    throw new NotFound
     // Yes, I'm to lazy to generate a new [dot]jade file to a 404 error
-    res.writeHeader(404,{"Content-type":"text/html"});
-    res.write('<title>404 No Encontrado - Node Hispano </title>')
-    res.write('<style>html{background-image: url(/images/bg.png);}');
-    res.write('div{text-align:center;padding-top:200px;width:100%;font-size:2em;}')
-    res.write('h4 {font-family:arial; text-shadow:1px 1px #fff;color:#444}')
-    res.write('#footer { font-family: arial;font-size: 0.9em;} a{text-decoration:none}</style>');
-    res.write('<div><img src="http://nodejs.org/logos/nodejs.png">');
-    res.write('<h4>404 - No Encontrado</h4></div>');
-    res.write('<div id="footer"><a href="/">Node Hispano</a> &hearts; node.js</h4></div>');
-    res.end();
   } else {
     next();
   }
-});
+});*/
 process.on('uncaughtException', function(excp, req,res) {
   console.log(excp.message)
   console.log(excp.stack)
 });
-if (process.env.NODE_ENV=== 'production'){
-  app.use(function(err, req, res) {
+
+app.get('/404', function(req, res){
+  throw new NotFound;
+});
+
+app.get('/500', function(req, res){
+  throw new Error('keyboard cat!');
+});
+app.error(function(err, req, res, next){
+  if (err instanceof NotFound) {
+      res.writeHeader(404,{"Content-type":"text/html"});
+      res.write('<title>404 No Encontrado - Node Hispano </title>')
+      res.write('<style>html{background-image: url(/images/bg.png);}');
+      res.write('div{text-align:center;padding-top:200px;width:100%;font-size:2em;}')
+      res.write('h4 {font-family:arial; text-shadow:1px 1px #fff;color:#444}')
+      res.write('#footer { font-family: arial;font-size: 0.9em;} a{text-decoration:none}</style>');
+      res.write('<div><img src="http://nodejs.org/logos/nodejs.png">');
+      res.write('<h4>404 - No Encontrado</h4></div>');
+      res.write('<div id="footer"><a href="/">Node Hispano</a> &hearts; node.js</h4></div>');
+      res.end();
+  } else {
     if (err) {
-      console.log(err)
+      res.end('500 Internal server Error \n' + err )
+    } else {
+      next();
     }
-  });
+  }
+});
+if (process.env.NODE_ENV=== 'production'){
+ 
   process.PORT = 13412;
 }
 
