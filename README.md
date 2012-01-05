@@ -4,7 +4,8 @@ A small and beautiful blog generator built on top of [couchdb](http://couchdb.ap
 
 ## Live example
 
-- [Node Hispano alike](http://fwdblog.jit.su)
+- Node Hispano site alike => [here](http://fdwblog.jit.su)
+
 ## Installation
 
     > git clone alejandromg/couchblog
