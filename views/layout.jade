@@ -50,10 +50,13 @@ html
         footer(role="realFooter")
           p #{sitetitle} &hearts; 
             a(href="//nodejs.org") node.js
-    -try {
-    - if (js !== 'undefined') {
-      - js.forEach(function(s){
-        script(type="text/javascript",src="/javascript/" + s)
-      - })
-    - }
+      script(type="text/javascript")
+        $(document).ready(function(){ $('.body-index img').closest('p').css({'width':'100%','text-align':'center'});});
+      -try {
+      - if (js !== 'undefined') {
+        - js.forEach(function(s){
+          script(type="text/javascript",src="/javascript/" + s)
+        - })
+      - }
     - } catch(exc) {}
+     
