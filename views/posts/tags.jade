@@ -13,6 +13,8 @@
         span.views  | Views: #{post.views}  
         span.up  | Up: #{post.up}
         span.down  | Down: #{post.down}
+        span.comments | 
+          a(href="/"+ post.id +"#disqus_thread",  data-disqus-identifier=post.title)
       h1.entry-title
         a(href='/' + post.id) #{post.title}
     div 

@@ -51,7 +51,16 @@ html
           p #{sitetitle} &hearts; 
             a(href="//nodejs.org") node.js
       script(type="text/javascript")
-        $(document).ready(function(){ $('.body-index img').closest('p').css({'width':'100%','text-align':'center'});});
+        $(document).ready(function(){ 
+          $('.body-index img').closest('p').css({'width':'100%','text-align':'center'});
+            var disqus_shortname = 'nhispano';
+            (function () {
+                var s = document.createElement('script'); s.async = true;
+                s.type = 'text/javascript';
+                s.src = 'http://' + disqus_shortname + '.disqus.com/count.js';
+                (document.getElementsByTagName('HEAD')[0] || document.getElementsByTagName('BODY')[0]).appendChild(s);
+            }());
+        });
       -try {
       - if (js !== 'undefined') {
         - js.forEach(function(s){
