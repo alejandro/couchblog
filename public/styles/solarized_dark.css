@@ -972,8 +972,11 @@ code {font-family:"Monaco","monospace" !important;}
 pre code {
   display: block; padding: 0.5em;
   background: #002b36; color: #839496;
+  -webkit-box-shadow:inset 0 0 10px #000000;
+  -moz-box-shadow:inset 0 0 10px #000000;
+  box-shadow:inset 0 0 10px #000000;
   padding-left:30px;
-  padding-bottom:20px;
+  padding-bottom:10px;
   font-family:"Monaco",monospace;font-size:0.9em;
 }
 
@@ -1027,6 +1030,7 @@ pre .tag .title,
 pre .rules .property,
 pre .django .tag .keyword {
   font-weight: bold;
+  font-size:1em;
 }
 
 pre .attribute,
