@@ -23,10 +23,10 @@ if (process.env.NODE_ENV==='production') {
    couchAuthUrl = 'http://' +cfg.user + ':' + cfg.pass + '@' + cfg.host + ':' + cfg.port;
 }
 
-var cnfg         =  config.user,
+var cnfg         = config.user,
     nano         = require('nano')(couchAuthUrl),
     toSeed       = ['blog','users','sessions'],
-    ready        =[];
+    ready        = [];
 
 console.log('\n\n\033[90m[seed]  : Solamente ejecuta este archivo una vez \033[39m' )
 var seedDatabase = function (){
