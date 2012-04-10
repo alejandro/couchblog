@@ -5,15 +5,19 @@
  *
 */
 
-var  cfg            = {},couchAuthUrl;
+var cfg = {}
+  , couchAuthUrl;
+
+// nunca expongas tus credenciales (siempre usa un config.json o ENV variables)
+// en este caso la base de datos es pública por lo tanto no hay necesidad de ocultarlos
 if (process.env.NODE_ENV === 'production'){
   cfg =  { 
-            host: "nhispano.iriscouch.com",
-            port: "80",
-            ssl:  false,
-            user: "alejandromg",
-            pass: "nhispano"
-          };  
+    host: "nhispano.iriscouch.com",
+    port: "80",
+    ssl:  false,
+    user: "alejandromg",
+    pass: "nhispano"
+  };  
  couchAuthUrl   = 'http://' +cfg.user + ':' +cfg.pass + '@' + cfg.host + ':' + cfg.port;
 }
 
@@ -28,20 +32,21 @@ var express        = require('express'),
     users          = nano.use('users');
 
 var store = new ConnectCouchDB({
-  name: 'sessions',
-  reapInterval: 600000,
-  compactInterval: 300000,
-  host: cfg.host || undefined,
-  port: cfg.port || undefined,
-  username: cfg.user || undefined,
-  password: cfg.pass || undefined
+  name            : 'sessions',
+  reapInterval    : 600000,
+  compactInterval : 300000,
+  host            : cfg.host || undefined,
+  port            : cfg.port || undefined,
+  username        : cfg.user || undefined,
+  password        : cfg.pass || undefined
 });
+
 // Shorthand for server + app global process
 var app = module.exports.app = process.app =  express.createServer(
   //small hack for make sessions works just fine
   express.bodyParser(),
   express.cookieParser('nhispano'),
-  express.session({secret: 'Node Hispano', store: store })
+  express.session({ secret: 'Node Hispano', store: store })
 );
 
 app.configure(function(){
@@ -55,11 +60,12 @@ app.configure(function(){
   app.use(express.methodOverride());
   app.use(express.favicon());
 });
+
 app.dynamicHelpers({
-  session: function(req, res) {
+  session : function(req, res) {
     return req.session;
   },
-  sitetitle:function(req,res){
+  sitetitle : function(req,res) {
     return  "Node Hispano";
   }
 });
@@ -71,6 +77,7 @@ app.configure('development', function(){
 app.configure('production', function(){
   app.use(express.errorHandler({dumpExceptions:true})); 
 });
+
 function NotFound(msg){
   this.name = 'NotFound';
   Error.call(this, msg);
@@ -79,90 +86,51 @@ function NotFound(msg){
 NotFound.prototype.__proto__ = Error.prototype;
 
 var getMonth = function(m){
-  m = (parseInt(m) === NaN) ? m : parseInt(m);
+  m = (parseInt(m) === NaN) ? m : parseInt(m,10);
   switch (m){
-    case 1:
-    case 'Jan':
-      return 'Ene';
-      break;
-    case 2:
-    case 'Feb':
-      return 'Feb'
-      break;
-    case 3:
-    case 'Mar':
-      return 'Mar'
-      break;
-    case 4:
-    case 'May':
-      return 'Abr'
-      break;
-    case 5:
-    case 'May':
-      return 'May'
-      break;
-    case 6:
-    case 'Jun':
-      return 'Jun'
-      break;
-    case 7:
-    case 'Jul':
-      return 'Jul'
-      break;
-    case 8:
-    case 'Aug':
-      return 'Ago'
-      break;
-    case 9:
-    case 'Sep':
-      return 'Sep'
-      break;
-    case 10:
-    case 'Oct':
-      return 'Oct'
-      break;
-    case 11:
-    case 'Nov':
-      return 'Nov'
-      break;
-    case 12:
-    case 'Dec':
-      return 'Dic'
-      break;
-    default:
-      return 'Ene'
-      break;
+    case 1: case 'Jan': return 'Ene'; break;
+    case 2: case 'Feb': return 'Feb'; break;
+    case 3: case 'Mar': return 'Mar'; break;
+    case 4: case 'May': return 'Abr'; break;
+    case 5: case 'May': return 'May'; break;
+    case 6: case 'Jun': return 'Jun'; break;
+    case 7: case 'Jul': return 'Jul'; break;
+    case 8: case 'Aug': return 'Ago'; break;
+    case 9: case 'Sep': return 'Sep'; break;
+    case 10: case 'Oct':return 'Oct'; break;
+    case 11: case 'Nov':return 'Nov'; break;
+    case 12: case 'Dec':return 'Dic'; break;
+    default: return 'Ene'; break;
   }
 }
 
 var prettyTitle = function (title,date) {
-  var c    = date ||  new Date(),
-      date = c.toJSON().substr(0,10).split('-').join('')
+  var _rdate = date ||  new Date(),
+      // I don't even
+      date   = _rdate.toJSON().substr(0,10).split('-').join('')
+
   return date + '-'+title
-  // change everything to lowercase
   .toLowerCase() 
-  // trim leading and trailing spaces
   .replace(/^\s+|\s+$/g, "") 
-  // change all spaces and underscores to a hyphen
   .replace(/[_|\s]+/g, "-") 
-  // remove all non-cyrillic, non-numeric characters except the hyphen
   .replace(/[^a-z\u0400-\u04FF0-9-]+/g, "") 
-  // replace multiple instances of the hyphen with a single instance
   .replace(/[-]+/g, "-") 
   .replace(/^-+|-+$/g, "")
-  // trim leading and trailing hyphens
   .replace(/[-]+/g, "-");
 }
+
 var mdRender = function(md){
   return md(md, true);
 }
+
 var isJSON = function(url) {
   return url.split('.')[1] === 'json';
 }
 
-var md5 = module.exports.md5 = function(str) {
+var md5 = function(str) {
   return crypto.createHash('md5').update(str).digest('hex');
 }
+
 var normalizeDate = function(d) {
   try {
     var da = d.substr(0,15);
@@ -176,35 +144,37 @@ var normalizeDate = function(d) {
     return {}
   }
 }
+
 var normalizeData = function(item){
   var html = item.value[1];
   return {
-          id:item._id || item.id, 
-          title:item.value[0], 
-          description:html,
-          views: item.value[2],
-          up: item.value[3],
-          down: item.value[4],
-          author: {
-            name: item.value[5] || 'admin',
-            contact: item.value[6]
-          },
-          tags: item.value[7],
-          date: normalizeDate(item.value[8] || item.key)
-        }
+    id          : item._id || item.id, 
+    title       : item.value[0], 
+    description : html,
+    views       : item.value[2],
+    up          : item.value[3],
+    down        : item.value[4],
+    author : {
+      name    : item.value[5] || 'admin',
+      contact : item.value[6]
+    },
+    tags : item.value[7],
+    date : normalizeDate(item.value[8] || item.key)
+  }
 }
-var getSortByAuthor = function (target, resp){
-  var posts = []
-  db.view('author','Author',{key: target, descending:true}, function(err,cb){
-      var author =[];
-    if (err){
-      resp(err,null)
+var getSortByAuthor = function (author, resp){
+  var posts  = [];
+
+  db.view('author','Author', { key : author, descending : true }, function(err,cb) {
+   
+    if (err) {
+      resp(err,null);
     } else if (cb.rows.length === 0 ) {
-      resp(new Error('Not_Found'),null)
+      resp(new Error('Not_Found'), null);
     } else {
       cb.rows.forEach(function(item){
         posts.push(normalizeData(item));
-        if ((cb.rows.length -1)=== cb.rows.indexOf(item)) {
+        if ((cb.rows.length - 1) === cb.rows.indexOf(item)) {
             resp(null, posts);
         }
       });
@@ -214,15 +184,15 @@ var getSortByAuthor = function (target, resp){
 
 
 var getLatest =function(resp){
-  var posts =[]
-  db.view('latest','latest',{limit:8,descending:true},function(err,cb){
+  var posts = [];
+  db.view('latest','latest', { limit : 8, descending : true }, function(err,cb) {
     if (err) {
-      resp(err, null)
+      resp(err)
     } else {
       if (cb.total_rows === 0){
         resp(null, [])
       } else if (cb.rows.length === 0) {
-        resp(new Error('not_found'),null);
+        resp(new Error('not_found'));
       } else {
         cb.rows.forEach(function(item){
           // Normalizar data
@@ -238,11 +208,11 @@ var getLatest =function(resp){
 var getByTag =function(tag,resp){
   var posts =[];
   var url = '/_design/tags/_view/tags';
-  db.view('tags','tags',{key: tag.trim(),limit:8,descending:true},function(err,cb){
+  db.view('tags','tags',{ key : tag.trim(), limit : 8, descending : true },function(err,cb) {
     if (err) {
-      resp(err, null)
+      resp(err)
     } else if (cb.rows.length === 0){
-        resp(new Error('not_found'),null);
+        resp(new Error('not_found'));
     } else {
       cb.rows.forEach(function(item){
         // Normalizar data
@@ -257,6 +227,7 @@ var getByTag =function(tag,resp){
 
 
 var User = module.exports.user = function(u,n){
+  // otra forma de realizarlo, evitando this es mandar el dato como objeto
   this.username =  u.username || 'anon';
   if (u.name === 'undefined') throw new Error('Necesito un nombre');
   this.name = u.name || null;
@@ -285,9 +256,11 @@ var User = module.exports.user = function(u,n){
 var buildP = function(password, salt) {
   return md5(password.trim() + (salt + ''));
 }
+
 var buildP64 = function(password,salt){
   return new Buffer(password.trim() + ( '' + salt).substr(-3)).toString('base64'); 
 }
+
 var updateUser = function(u,c,r){
   /*
   c =>
@@ -316,14 +289,13 @@ var updateUser = function(u,c,r){
   else if (c.bio.trim()=== '' && c.bio.trim() !== user.bio.trim()){ 
             c.bio = c.bio }
   else    {  c.bio = user.bio || 'Soy ' + use.name;}
-// Siempre priorizar los datos previos a los nuevos...
- user.password = c.nopassword[1] === c.nopassword[0] 
-                 ? buildP(c.nopassword[1]) : user.password;
- user.username = c.username === user.username ? user.username :c.username;
- user.contact  = c.contact === user.contact ? user.contact :c.contact;
- user.email    = c.email === user.email ? user.email :c.email;
- user.bio      = c.bio === user.bio ? user.bio:c.bio;
- user.name     = c.name.trim()=== ''?user.name : c.name;
+  // Siempre priorizar los datos previos a los nuevos...
+   user.password = c.nopassword[1] === c.nopassword[0] ? buildP(c.nopassword[1]) : user.password;
+   user.username = c.username === user.username ? user.username :c.username;
+   user.contact  = c.contact === user.contact ? user.contact :c.contact;
+   user.email    = c.email === user.email ? user.email :c.email;
+   user.bio      = c.bio === user.bio ? user.bio:c.bio;
+   user.name     = c.name.trim()=== ''?user.name : c.name;
   try {
     users.insert(user, function(error, resp){
       if (error) {
@@ -336,6 +308,7 @@ var updateUser = function(u,c,r){
     r(excp, null);
   }
 }
+
 var giveMeLabels = function giveMeLabels(text) {
   if (!text) return [];
   /* split (s) para espacios*/
@@ -346,6 +319,7 @@ var giveMeLabels = function giveMeLabels(text) {
   });
   return tags
 }
+
 var Post = function(p,req,n) {
   this.date = p.fecha;
   this._id = this.id = prettyTitle(p.titulo);
@@ -366,25 +340,27 @@ var Post = function(p,req,n) {
     this.content = p.content || 'No content'
   }
 
-  var u=req.session.user;
-  u.posts.push(this.id);
-  this.author = p.author || { username : u.username,
-    posts:u.posts,
-    contact: u.contact,
-    bio:u.bio,
-    name:u.name }
-  this.description = p.description || this.content.substr(0,250);
-  this.up = p.up || 1;
-  this.views = p.views || 0;
-  this.down = p.down || 0;
-  this.percentil = (this.up - this.down);
-}
+    var u = req.session.user;
+    u.posts.push(this.id);
+    this.author = p.author || { username : u.username,
+      posts:u.posts,
+      contact: u.contact,
+      bio:u.bio,
+      name:u.name }
+    this.description = p.description || this.content.substr(0,250);
+    this.up = p.up || 1;
+    this.views = p.views || 0;
+    this.down = p.down || 0;
+    this.percentil = (this.up - this.down);
+} 
+
 app.all('*',function(req,res,next){
   if (res.statusCode === 500){
     throw new Error();
   } 
   next()
 });
+
 app.get('/',function(req,res){
   getLatest(function(err,data){
     if (err) {
@@ -403,6 +379,7 @@ app.get('/',function(req,res){
     }
   });
 });
+
 app.get('/tag/:tag',function(req,res){
   var tag = req.params.tag;
   getByTag(tag, function(error,data){
@@ -425,6 +402,7 @@ app.get('/tag/:tag',function(req,res){
     }
   });
 });
+
 app.get('/user/:user',function(req,res){
   getSortByAuthor(req.params.user, function(err,resp){
     if (err && err.message === 'Not_Found') {
@@ -435,36 +413,38 @@ app.get('/user/:user',function(req,res){
       console.log(resp)
       res.render('posts/tags',{
         date: { 
-          now: new Date(),
+          now   : new Date(),
           month : 'Enero'.substr(0,3), // TODO: Delete this
-          day: "01",
-          year: "2012"
+          day   : "01",
+          year  : "2012"
         },
-        posts: resp,
-        title:"Node Hispano",
-        tag:req.params.user,
-        rtag: false
+        posts : resp,
+        title : "Node Hispano",
+        tag   : req.params.user,
+        rtag  : false
       }); 
     }
   });
 });
+
 app.post('/u/new(*)',function(req,res){
   if (req.session.user.level === 4) {
     if (req.body){
-      var rb       = req.body,
-          username = rb.username, 
-          ruser = new User(rb,true);
+      var rb       = req.body
+        , username = rb.username
+        , ruser    = new User(rb,true)
+        ;
       users.view('username','auth',{key:username,limit:1}, function(error,ok){
         if (ok && ok.offset === 1){
           users.insert(ruser, function(error,ok){
             if (error){
-              res.json({code:500, status:error});
+              res.json({code:500, status:error},500);
             } else {
               res.json({code:200, status:'ok'});
             }
           });
         } else {
-            res.json({code:500, status:'Usuario ya existe'});
+            res.json({code:500, status:'Usuario ya existe'},500);
         }
       })
     } else {
@@ -495,6 +475,7 @@ app.get('/admin(*)',function(req,res){
     res.end('<h2>No Implementeda GTFO!</h2>')
   }
 });
+
 app.post('/b/new',function(req,res){
   var body = req.body;
   try {body.titulo = body.title.trim()}catch(ex){}
@@ -569,6 +550,7 @@ app.get('/login',function(req,res){
     });
   }
 });
+
 app.get('/logout',function(req,res){
   if (req.session.user) {
     with (req.session) {
@@ -581,10 +563,11 @@ app.get('/logout',function(req,res){
   res.redirect('/');
 });
 app.post('/u/update(*)',function(req,res){
-var c = req.body,
-    sta  ='',
-    inf    ='',
-    s = req.session.user;
+var c   = req.body
+  , sta = ''
+  , inf = ''
+  , s   = req.session.user;
+
   if (c.nopassword[0] !== c.nopassword[1]) {
      res.json({status:'Error',info:'nuevos password no concuerdan'});
   } else if (buildP64(c.password,s.salt) === s.password 
@@ -593,10 +576,10 @@ var c = req.body,
     updateUser(req.session.user, c, function(err,resp){
       if (err) {
         sta = 'Error'; 
-        inf=err;
+        inf = err;
       } else {
         sta = 'ok'; 
-        inf='Updated';
+        inf ='Updated';
         users.get(resp.id, function(e,c){
           req.session.user_id = c._id;
           req.session._rev = c._rev;
@@ -630,8 +613,8 @@ app.get('/404', function(req, res){
 });
 
 app.get('/500', function(req, res){
-  res.writeHeader(404,{"Content-type":"text/html"});
-  res.write('<title>404 No Encontrado - Node Hispano </title>')
+  res.writeHeader(500,{"Content-type":"text/html"});
+  res.write('<title>500 Internal Server Error - Node Hispano </title>')
   res.write('<style>html{background-image: url(/images/bg.png);}');
   res.write('div{text-align:center;padding-top:200px;width:100%;font-size:2em;}')
   res.write('h4 {font-family:arial; text-shadow:1px 1px #fff;color:#444}')
@@ -666,11 +649,11 @@ app.get('/*',function(req,res,next){
      checkId  = parseInt(id.substr(0,8)).toString().length;
      rdate    = id.substr(0,8),
      rdate    = {
-                  now: rdate,
-                  year: rdate.substr(0,4), 
-                  month: getMonth(rdate.substr(-4).substr(0,2)),
-                  day: rdate.substr(-2),
-                }
+        now   : rdate,
+        year  : rdate.substr(0,4), 
+        month : getMonth(rdate.substr(-4).substr(0,2)),
+        day   : rdate.substr(-2),
+      }
   rdate.date = rdate.day+'-'+ rdate.month + '-'+rdate.year;
   } catch(excp) { }
   if ( checkId === 8 && checkUrl === 2) {
@@ -684,9 +667,9 @@ app.get('/*',function(req,res,next){
             else return true; 
         });
         res.render('posts/index',{
-          bodyContent: post.content,
-          post: post,
-          date: rdate
+          bodyContent : post.content,
+          post        : post,
+          date        : rdate
         });
       }
     });
@@ -703,5 +686,6 @@ app.get('/*',function(req,res,next){
 });
 
 
-app.listen(process.PORT || 8000);
-console.info('Kennedy: Puerto: %s \nKennedy: Ambiente: %s', app.address().port , process.env.NODE_ENV);
+app.listen(process.PORT || 8000, function(){
+  console.info('Kennedy: Puerto: %s \nKennedy: Ambiente: %s', app.address().port , process.env.NODE_ENV);  
+});

@@ -11,12 +11,13 @@
 // Be sure that you have already modify the config.js file
 //
 
-var cfg          = {
-                     host:'localhost',
-                     port:5984
-                   },
-    couchAuthUrl = cfg.host,
-    config       = require('./config');
+var cfg = {
+      host:'localhost',
+      port:5984
+    }
+  , couchAuthUrl = cfg.host
+  , config       = require('./config')
+  ;
 
 if (process.env.NODE_ENV==='production') {
    cfg          = config.db;
@@ -29,6 +30,7 @@ var cnfg         = config.user,
     ready        = [];
 
 console.log('\n\n\033[90m[seed]  : Solamente ejecuta este archivo una vez \033[39m' )
+
 var seedDatabase = function (){
   nano.db.list(function(err,res){
     if (err) {
@@ -43,7 +45,7 @@ var seedDatabase = function (){
           nano.db.create(db)
           ready.push(db)
         }
-        if ((toSeed.length -1)=== toSeed.indexOf(db)) {
+        if ((toSeed.length - 1) === toSeed.indexOf(db)) {
           if (ready.length === toSeed.length) {
             console.log('[seed]  : Guardando vistas');
               seedViews(toSeed);
@@ -137,7 +139,7 @@ var seedViews = function(dbs){
         });
       });
     } 
-     if ((dbs.length -1)=== dbs.indexOf(db)) {
+     if ((dbs.length -1) === dbs.indexOf(db)) {
       console.log('\033[96m[seed]  : Vistas y BDD guardadas\033[39m')
       setDefaultUser();
     }
@@ -147,22 +149,22 @@ var cd =0;
 var setDefaultUser = function(){
   if (cd === 0) {
     cd += 1;
-     var duser = 
-     {
-       "username":  cnfg.user,
-       "name":  cnfg.name,
-       "email": cnfg.email,
-       "contact": cnfg.contact,
-       "bio": "Soy " + cnfg.name, 
-       "posts": [],
-       "popular":1, 
-       "level": 4,
-       "salt": 1325556595339,
-       "password": "QmllbnZlbmlkbzMzOQ==",
-       "verified": true
+     var duser = {
+        "username" : cnfg.user
+      , "name"     : cnfg.name
+      , "email"    : cnfg.email
+      , "contact"  : cnfg.contact
+      , "bio"      : "Soy " + cnfg.name
+      , "posts"    : []
+      , "popular"  : 1
+      , "level"    : 4
+      , "salt"     : 1325556595339
+      , "password" : "QmllbnZlbmlkbzMzOQ==" // Default to "Bienvenido"
+      , "verified" : true
     }
-    nano.use('users').view('username','auth',{key:duser.username}, function(e,r){
-      if ( r && r.error === 'not_found') {
+    nano.use('users').view('username','auth',{ key: duser.username }, function(e,r) {
+    
+      if ( r && r.rows.length == 0) {
         nano.use('users').insert(duser,function(err,resp){
           if (err && err.message !== 'Document update conflict.') {
             console.log('[seed]  : User No saved ' + err.message)
@@ -178,11 +180,11 @@ var setDefaultUser = function(){
     });
   }
 }
-var defaultpost = {
-   "_id": "20120104-hola-mundo",
-   "date": new Date(),
-   "id":  "20120104-hola-mundo",
-   "title": "Hola Mundo",
+var _defaultPost = {
+   "_id"   : "20120104-hola-mundo",
+   "date"  : new Date(),
+   "id"    :  "20120104-hola-mundo",
+   "title" : "Hola Mundo",
    "tags": [
        "hola mundo"
    ],
@@ -194,19 +196,20 @@ var defaultpost = {
        "posts": [
        "20120104-hola-mundo"
        ],
-       "contact": cnfg.contact,
-       "bio": "Soy "+ cnfg.name,
-       "name": cnfg.name
+       "contact" : cnfg.contact,
+       "bio"     : "Soy "+ cnfg.name,
+       "name"    : cnfg.name
    },
-   "description":"<h4>Default Post</h4><p>Este puede estar escrito en" +
-              "<a href='http://daringfireball.net/projects/markdown)'> markdown</a>",
-   "up": 1,
-   "views": 5,
-   "down": 0,
-   "percentil": 1
+   "description" : "<h4>Default Post</h4><p>Este puede estar escrito en" +
+                   "<a href='http://daringfireball.net/projects/markdown'> markdown</a>",
+   "up"        : 1,
+   "views"     : 5,
+   "down"      : 0,
+   "percentil" : 1
 }
+
 var defaultPost = function(){
-  nano.use('blog').insert(defaultpost,function(err,resp){
+  nano.use('blog').insert(_defaultPost,function(err,resp){
     if (err && err.message !== 'Document update conflict.') {
       console.log('[seed]  : Error saving default post')
       console.log('\033[96m[seed]  : NOT OK\033[39m\n\n')
