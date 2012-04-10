@@ -40,7 +40,7 @@ article
       | .
   #disqus_thread
 script(type="text/javascript")
-  var disqus_shortname = 'nhispano';
+  var disqus_shortname = #{"'" + disqus.shortname + "'"}; //nhispano
   (function() {
       var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
       dsq.src = 'http://' + disqus_shortname + '.disqus.com/embed.js';

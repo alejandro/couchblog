@@ -67,6 +67,11 @@ app.dynamicHelpers({
   },
   sitetitle : function(req,res) {
     return  "Node Hispano";
+  },
+  disqus : function(req,res){
+    return {
+      shortname : 'nhispano'
+    }
   }
 });
 
